@@ -1,0 +1,21 @@
+=== 2D Roguelike Game - Credits ===
+
+# Art Assets
+- 16x16 DungeonTileset II by 0x72
+  Source: https://0x72.itch.io/dungeontileset-ii
+  License: CC0
+
+- (다운받은 에셋 추가)
+
+# Sound Effects
+- (나중에 추가)
+
+# Music
+- (나중에 추가)
+
+# Tools
+- Unity Engine
+- Visual Studio / Rider
+
+# Development
+- JinMo Jung
