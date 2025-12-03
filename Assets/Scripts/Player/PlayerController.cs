@@ -14,6 +14,7 @@ public class PlayerController : MonoBehaviour
     [Header("References")]
     private Rigidbody2D rb;
     private Camera mainCamera;
+    private Animator animator;
 
     private Vector2 moveInput;
     private Vector2 mousePosition;
@@ -22,6 +23,7 @@ public class PlayerController : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         mainCamera = Camera.main;
+        animator = GetComponent<Animator>();
     }
 
     void Update()
@@ -59,6 +61,12 @@ public class PlayerController : MonoBehaviour
     private void HandleMovement()
     {
         rb.velocity = moveInput * moveSpeed;
+
+        //애니메이션 파라미터 
+        if (animator != null)
+        {
+            animator.SetFloat("Speed", rb.velocity.magnitude);
+        }
     }
 
     /// <summary>
