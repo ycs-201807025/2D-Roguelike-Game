@@ -10,6 +10,7 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
+    [SerializeField] private float maxSpeed = 10f;
 
     [Header("References")]
     private Rigidbody2D rb;
@@ -18,6 +19,8 @@ public class PlayerController : MonoBehaviour
 
     private Vector2 moveInput;
     private Vector2 mousePosition;
+
+   
 
     void Awake()
     {
@@ -38,6 +41,12 @@ public class PlayerController : MonoBehaviour
     {
         //이동 처리
         HandleMovement();
+
+        //최대 속도 제한
+        if (rb.velocity.magnitude > maxSpeed)
+        {
+            rb.velocity = rb.velocity.normalized * maxSpeed;
+        }
     }
 
     /// <summary>
@@ -88,7 +97,12 @@ public class PlayerController : MonoBehaviour
     //디버그 용 : 이동방향 표시
     void OnDrawGizmos()
     {
-        Gizmos.color = Color.green;
-        Gizmos.DrawLine(transform.position, transform.position + (Vector3)moveInput * 2f);
+        if (Application.isPlaying && mainCamera != null)
+        {
+            // 플레이어 → 마우스 방향 선 그리기
+            Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+            Gizmos.color = Color.red;
+            Gizmos.DrawLine(transform.position, mousePos);
+        }
     }
 }
