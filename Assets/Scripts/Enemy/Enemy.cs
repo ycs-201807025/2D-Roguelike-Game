@@ -153,16 +153,16 @@ public class Enemy : MonoBehaviour
     //디버그
     private void OnDrawGizmosSelected()
     {
-        if (data != null)
-        {
-            //감지 범위
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawWireSphere(transform.position, data.detectionRange);
+        if (data == null) return;
+        
+        //감지 범위
+        Gizmos.color = Color.yellow;
+        Gizmos.DrawWireSphere(transform.position, data.detectionRange);
 
-            //공격 범위
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireSphere(transform.position, data.attackRange);
-        }
+        //공격 범위
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, data.attackRange);
+        
     }
 }
 
