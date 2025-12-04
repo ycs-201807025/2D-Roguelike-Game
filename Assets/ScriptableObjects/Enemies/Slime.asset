@@ -9,14 +9,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f80178b1e86a07f46a9e09436e7e46bd, type: 3}
-  m_Name: New Weapon
+  m_Script: {fileID: 11500000, guid: 4d824bc66e4080a419b59f45bbf259a2, type: 3}
+  m_Name: Slime
   m_EditorClassIdentifier: 
-  weaponName: Sword
-  weaponIcon: {fileID: 0}
-  damage: 15
-  attackSpeed: 0.5
-  attackRange: 1.5
-  projectilePrefab: {fileID: 0}
-  projectileSpeed: 10
-  attackEffectPrefab: {fileID: 0}
+  enemyName: Slime
+  Sprite: {fileID: 0}
+  maxHealth: 30
+  damage: 5
+  moveSpeed: 2
+  detectionRange: 5
+  attackRange: 0.2
+  attackCooldown: 1
+  goldDrop: 5
+  soulDrop: 2

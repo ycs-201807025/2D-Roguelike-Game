@@ -5,7 +5,7 @@ using UnityEngine;
 /// <summary>
 /// 적 데이터 ScriptableObject
 /// </summary>
-[CreateAssetMenu(fileName = "NewEnemy", menuName = "Gmae/EnemyData")]
+[CreateAssetMenu(fileName = "NewEnemy", menuName = "Game/EnemyData")]
 public class EnemyData : ScriptableObject
 {
     [Header("Basic Info")]
