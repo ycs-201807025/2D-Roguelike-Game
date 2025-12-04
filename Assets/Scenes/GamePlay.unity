@@ -4316,10 +4316,12 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 666362662}
-  - component: {fileID: 666362661}
   - component: {fileID: 666362664}
   - component: {fileID: 666362663}
+  - component: {fileID: 666362661}
   - component: {fileID: 666362665}
+  - component: {fileID: 666362666}
+  - component: {fileID: 666362667}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -4437,6 +4439,36 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   currentWeapon: {fileID: 11400000, guid: 54b8d25b8aaf1274c87912a2dd0bcc23, type: 2}
   attackPoint: {fileID: 448255646}
+--- !u!114 &666362666
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 666362660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 96e49525c74a553439398a32c45dd4e4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 100
+  invincibilityDuration: 1
+--- !u!114 &666362667
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 666362660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1d125fb17fcf1f64d8e799a4d0f47bca, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  afterimageInterval: 0.05
+  afterimageDuration: 0.3
+  afterimageColor: {r: 1, g: 1, b: 1, a: 0.5}
+  playerSprite: {fileID: 1668722559}
 --- !u!1 &922865763
 GameObject:
   m_ObjectHideFlags: 0

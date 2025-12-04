@@ -24,6 +24,7 @@ public class PlayerController : MonoBehaviour
     private Rigidbody2D rb;
     private Camera mainCamera;
     private Animator animator;
+    private DashAfterImage dashAfterImage;
 
     private Vector2 moveInput;
     private Vector2 mousePosition;
@@ -39,6 +40,7 @@ public class PlayerController : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         mainCamera = Camera.main;
         animator = GetComponent<Animator>();
+        dashAfterImage = GetComponent<DashAfterImage>();
     }
 
     void Update()
@@ -165,6 +167,12 @@ public class PlayerController : MonoBehaviour
         {
             dashDirection = (mousePosition - (Vector2)transform.position).normalized;
         }
+
+        //잔상 효과 시작
+        if (dashAfterImage != null)
+        {
+            dashAfterImage.StartDash();
+        }
     }
 
     /// <summary>
@@ -182,7 +190,15 @@ public class PlayerController : MonoBehaviour
     {
         isDashing = false;
         rb.velocity = Vector2.zero;
+
+        //잔상 효과 종료
+        if (dashAfterImage != null)
+        {
+            dashAfterImage.StopDash();
+        }
+
         Debug.Log("대시 종료");
+
     }
 
     //디버그 용 : 이동방향 표시
