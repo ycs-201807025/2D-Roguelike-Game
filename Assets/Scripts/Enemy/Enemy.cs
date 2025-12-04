@@ -95,7 +95,11 @@ public class Enemy : MonoBehaviour
             attackCooldown = data.attackCooldown;
 
             //플레이어에게 대미지
-            //player.GetComponent<PlayerHealth>()?.TakeDamage(data.damage);
+            var playerHealth = player.GetComponent<PlayerHealth>();
+            if (playerHealth != null)
+            {
+                playerHealth.TakeDamage(data.damage);
+            }
 
             Debug.Log($"{data.enemyName}이(가) 공격");
         }
