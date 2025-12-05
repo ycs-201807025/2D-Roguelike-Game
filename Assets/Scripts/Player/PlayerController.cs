@@ -16,7 +16,6 @@ public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
-    [SerializeField] private float maxSpeed = 10f;
 
     [Header("Dash Settings")]
     [SerializeField] private float dashSpeed = 15f;
@@ -132,11 +131,9 @@ public class PlayerController : MonoBehaviour
         //마우스 위치
         mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
 
-        //대시 입력 (스페이스바)
-        if (Input.GetKeyDown(KeyCode.Space) && CanDash())
-        {
-            StartDash();
-        }
+        // 대시 입력
+        dashInput = Input.GetKeyDown(KeyCode.Space);
+
         //공격 입력
         attackInput = Input.GetMouseButtonDown(0);
     }
@@ -224,6 +221,7 @@ public class PlayerController : MonoBehaviour
         if (dashAfterImage != null)
         {
             dashAfterImage.StartDash();
+            Debug.Log("DashAfterimage.StartDash() 호출됨");
         }
 
         //애니메이션
@@ -231,6 +229,7 @@ public class PlayerController : MonoBehaviour
         {
             animator.SetTrigger("Dash");
         }
+        Debug.Log("PlayerController.StartDash() 호출됨");
     }
 
     /// <summary>
@@ -253,7 +252,9 @@ public class PlayerController : MonoBehaviour
         if (dashAfterImage != null)
         {
             dashAfterImage.StopDash();
+            Debug.Log("DashAfterimage.StopDash() 호출됨");
         }
+        Debug.Log("PlayerController.EndDash() 호출됨");
     }
 
     /// <summary>

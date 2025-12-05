@@ -61,9 +61,9 @@ public class PlayerWeapon : MonoBehaviour
         else
         {
             RangedAttack();
-
-            Debug.Log($"{currentWeapon.weaponName}공격!");
+  
         }
+        Debug.Log($"{currentWeapon.weaponName}공격!");
     }
 
     ///<summary>
@@ -103,21 +103,31 @@ public class PlayerWeapon : MonoBehaviour
     /// </summary>
     private void RangedAttack()
     {
-        if (currentWeapon.projectilePrefab == null) return;
+        if (currentWeapon.projectilePrefab == null)
+        {
+            Debug.LogWarning("원거리 무기인데 투사체 프리팹이 없습니다!");
+            return;
+        }
 
-        //투사체 생성
-        GameObject projectile = Instantiate(
+        // 투사체 생성
+        GameObject projectileObj = Instantiate(
             currentWeapon.projectilePrefab,
             attackPoint.position,
             attackPoint.rotation
-            );
+        );
 
-        //투사체 대미지 적용
-        //var proj = projectile.GetComponent<projectile>();
-        //if(proj != null)
-        //{
-        //    proj.Initialize(currentWeapon.damage,currentWeapon.projectileSpeed);
-        //}
+        // 투사체 초기화
+        Projectile projectile = projectileObj.GetComponent<Projectile>();
+        if (projectile != null)
+        {
+            // 발사 방향 (attackPoint의 up 방향)
+            Vector2 direction = attackPoint.up;
+            projectile.Initialize(currentWeapon.damage, currentWeapon.projectileSpeed, direction);
+        }
+        else
+        {
+            Debug.LogError("투사체에 Projectile 컴포넌트가 없습니다!");
+        }
     }
 
     /// <summary>
