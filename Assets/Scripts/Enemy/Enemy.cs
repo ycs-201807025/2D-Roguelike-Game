@@ -30,9 +30,9 @@ public class Enemy : MonoBehaviour
         if (data != null)
         {
             currentHealth = data.maxHealth;
-            if(spriteRenderer != null && data.Sprite != null)
+            if(spriteRenderer != null && data.sprite != null)
             {
-                spriteRenderer.sprite = data.Sprite;
+                spriteRenderer.sprite = data.sprite;
             }
         }
     }

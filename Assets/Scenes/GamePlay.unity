@@ -4318,6 +4318,8 @@ GameObject:
   - component: {fileID: 666362665}
   - component: {fileID: 666362666}
   - component: {fileID: 666362667}
+  - component: {fileID: 666362669}
+  - component: {fileID: 666362668}
   m_Layer: 6
   m_Name: Player
   m_TagString: Player
@@ -4338,7 +4340,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 1
-  maxSpeed: 10
   dashSpeed: 15
   dashDuration: 0.2
   dashCooldown: 1
@@ -4433,7 +4434,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 68b5814004ba33546afa42fe3ffe3a24, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  currentWeapon: {fileID: 11400000, guid: 54b8d25b8aaf1274c87912a2dd0bcc23, type: 2}
+  currentWeapon: {fileID: 0}
   attackPoint: {fileID: 448255646}
 --- !u!114 &666362666
 MonoBehaviour:
@@ -4465,6 +4466,34 @@ MonoBehaviour:
   afterimageDuration: 0.3
   afterimageColor: {r: 1, g: 1, b: 1, a: 0.5}
   playerSprite: {fileID: 1668722559}
+--- !u!114 &666362668
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 666362660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 07fecf7127544a744bcd09fdd9b44077, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  weapons:
+  - {fileID: 11400000, guid: 54b8d25b8aaf1274c87912a2dd0bcc23, type: 2}
+  - {fileID: 11400000, guid: ec69cc8c749365444b48ba04dde044a7, type: 2}
+--- !u!114 &666362669
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 666362660}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02fb243053c8b844394c612de3b66c59, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentStateName: 
 --- !u!1 &922865763
 GameObject:
   m_ObjectHideFlags: 0

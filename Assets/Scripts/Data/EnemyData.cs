@@ -10,7 +10,7 @@ public class EnemyData : ScriptableObject
 {
     [Header("Basic Info")]
     public string enemyName = "Slime";
-    public Sprite Sprite;
+    public Sprite sprite;
 
     [Header("Stats")]
     public int maxHealth = 30;
