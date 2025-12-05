@@ -158,6 +158,8 @@ MonoBehaviour:
   spawnAreaMin: {x: -8, y: -7}
   spawnAreaMax: {x: 10, y: 9}
   minDistanceFromPlayer: 5
+  useWaveSystem: 0
+  enemiesPerWave: 5
 --- !u!4 &70828876
 Transform:
   m_ObjectHideFlags: 0

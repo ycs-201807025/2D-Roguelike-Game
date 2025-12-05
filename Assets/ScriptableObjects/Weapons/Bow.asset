@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f80178b1e86a07f46a9e09436e7e46bd, type: 3}
+  m_Name: Bow
+  m_EditorClassIdentifier: 
+  weaponName: Bow
+  weaponIcon: {fileID: 21300000, guid: c1250b69570221641bf4d9d54e44301e, type: 3}
+  damage: 12
+  attackSpeed: 0.8
+  attackRange: 10
+  projectilePrefab: {fileID: 1592804562382812946, guid: 106f083ebf456af44bee14c1b74cf3b7, type: 3}
+  projectileSpeed: 15
+  attackEffectPrefab: {fileID: 0}
