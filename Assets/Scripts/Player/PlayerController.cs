@@ -7,8 +7,11 @@ using UnityEngine;
 /// 2025-12-03 (1일차) : 기본 이동, 마우스 방향 회전
 /// 플레이어 대시
 /// 2025-12-04 (2일차) : 대시 기능 추가
+/// 플레이어 상태 패턴
+/// 2025-12-05 (3일차) : 상태 머신 
 /// </summary>
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(PlayerStateMachine))]
 public class PlayerController : MonoBehaviour
 {
     [Header("Movement Settings")]
@@ -25,15 +28,30 @@ public class PlayerController : MonoBehaviour
     private Camera mainCamera;
     private Animator animator;
     private DashAfterImage dashAfterImage;
+    private PlayerWeapon playerWeapon;
+    private PlayerStateMachine stateMachine;
 
     private Vector2 moveInput;
     private Vector2 mousePosition;
+    private bool dashInput;
+    private bool attackInput;
 
     //대시 관련
-    private bool isDashing = false;
-    private float dashTimer = 0f;
+    //private bool isDashing = false;
+    //private float dashTimer = 0f;
     private float dashCooldownTimer = 0f;
     private Vector2 dashDirection;
+
+    //입력 활성화
+    private bool inputEnabled = true;
+
+    //상태에서 접근
+    public Vector2 MoveInput => moveInput;
+    public bool HasMoveInput => moveInput.magnitude > 0.1f;
+    public bool IsDashInput => dashInput;
+    public bool IsAttackInput => attackInput;
+    public float DashDuration => dashDuration;
+    public Vector2 DashDirection => dashDirection;
 
     void Awake()
     {
@@ -41,55 +59,65 @@ public class PlayerController : MonoBehaviour
         mainCamera = Camera.main;
         animator = GetComponent<Animator>();
         dashAfterImage = GetComponent<DashAfterImage>();
+        playerWeapon = GetComponent<PlayerWeapon>();
+        stateMachine = GetComponent<PlayerStateMachine>();
     }
 
     void Update()
     {
-        //대시 중이 아닐 때만 입력 받음
-        if (!isDashing)
-        { 
-            // 이동 입력 받기
-            HandleInput();
-            // 마우스 방향 회전
-            HandleRotation();
-        }
+        if (!inputEnabled) return;
 
-        //대시 쿨다운
-        if (dashCooldownTimer > 0)
-        {
-            dashCooldownTimer -= Time.deltaTime;
-        }
+        //입력 받기
+        HandleInput();
 
-        //대시 타이머
-        if (isDashing)
-        {
-            dashTimer -= Time.deltaTime;
-            if (dashTimer <= 0)
-            {
-                EndDash();
-            }
-        }
+        //쿨다운 업데이트
+        UpdateCooldowns();
+
+        ////대시 중이 아닐 때만 입력 받음
+        //if (!isDashing)
+        //{ 
+        //    // 이동 입력 받기
+        //    HandleInput();
+        //    // 마우스 방향 회전
+        //    HandleRotation();
+        //}
+
+        ////대시 쿨다운
+        //if (dashCooldownTimer > 0)
+        //{
+        //    dashCooldownTimer -= Time.deltaTime;
+        //}
+
+        ////대시 타이머
+        //if (isDashing)
+        //{
+        //    dashTimer -= Time.deltaTime;
+        //    if (dashTimer <= 0)
+        //    {
+        //        EndDash();
+        //    }
+        //}
     }
 
-    void FixedUpdate()
-    {
-        if (isDashing)
-        {
-            HandleDash();
-        }
-        else
-        {
-            //이동 처리
-            HandleMovement();
-        }
+    //void FixedUpdate()
+    //{
+    //    if (isDashing)
+    //    {
+    //        HandleDash();
+    //    }
+    //    else
+    //    {
+    //        //이동 처리
+    //        HandleMovement();
+    //    }
             
 
-        //최대 속도 제한
-        if (rb.velocity.magnitude > maxSpeed)
-        {
-            rb.velocity = rb.velocity.normalized * maxSpeed;
-        }
-    }
+    //    //최대 속도 제한
+    //    if (rb.velocity.magnitude > maxSpeed)
+    //    {
+    //        rb.velocity = rb.velocity.normalized * maxSpeed;
+    //    }
+    //}
 
     /// <summary>
     /// 키보드 마우스 입력 처리
@@ -109,19 +137,31 @@ public class PlayerController : MonoBehaviour
         {
             StartDash();
         }
+        //공격 입력
+        attackInput = Input.GetMouseButtonDown(0);
+    }
+    ///<summary
+    ///쿨다운 업데이트
+    ///</summary>
+    private void UpdateCooldowns()
+    {
+        if(dashCooldownTimer > 0)
+        {
+            dashCooldownTimer -= Time.deltaTime;
+        }
     }
 
     /// <summary>
     /// 플레이어 이동
     /// </summary>
-    private void HandleMovement()
+    public void HandleMovement()
     {
         rb.velocity = moveInput * moveSpeed;
 
         //애니메이션 파라미터 
         if (animator != null)
         {
-            animator.SetFloat("Speed", rb.velocity.magnitude);
+            animator.SetFloat("Speed", moveInput.magnitude);
         }
     }
 
@@ -129,7 +169,7 @@ public class PlayerController : MonoBehaviour
     /// 마우스 방향 회전
     /// </summary>
     
-    private void HandleRotation()
+    public void HandleRotation()
     {
         //플레이어 -> 마우스 방향 벡터
         Vector2 direction = mousePosition - (Vector2)transform.position;
@@ -140,22 +180,34 @@ public class PlayerController : MonoBehaviour
         //회전 적용
         transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
     }
+    /// <summary>
+    /// 이동 정지
+    /// </summary>
+    public void StopMovement()
+    {
+        rb.velocity = Vector2.zero;
+
+        if (animator != null)
+        {
+            animator.SetFloat("Speed", 0f);
+        }
+    }
 
     /// <summary>
     /// 대시 가능 여부 확인
     /// </summary>
-    private bool CanDash()
+    public bool CanDash()
     {
-        return !isDashing && dashCooldownTimer <= 0;
+        return dashCooldownTimer <= 0;
     }
 
     /// <summary>
     /// 대시 시작
     /// </summary>
-    private void StartDash()
+    public void StartDash()
     {
-        isDashing = true;
-        dashTimer = dashDuration;
+        //isDashing = true;
+        //dashTimer = dashDuration;
         dashCooldownTimer = dashCooldown;
 
         //이동 중일때는 이동방향으로 아닐때는 마우스방향으로
@@ -173,12 +225,18 @@ public class PlayerController : MonoBehaviour
         {
             dashAfterImage.StartDash();
         }
+
+        //애니메이션
+        if (animator != null)
+        {
+            animator.SetTrigger("Dash");
+        }
     }
 
     /// <summary>
     /// 대시 중 이동 처리
     /// </summary>
-    private void HandleDash()
+    public void HandleDashMovement()
     {
         rb.velocity = dashDirection * dashSpeed;
     }
@@ -186,19 +244,54 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 대시 종료
     /// </summary>
-    private void EndDash()
+    public void EndDash()
     {
-        isDashing = false;
-        rb.velocity = Vector2.zero;
+        //isDashing = false;
+        //rb.velocity = Vector2.zero;
 
         //잔상 효과 종료
         if (dashAfterImage != null)
         {
             dashAfterImage.StopDash();
         }
+    }
 
-        Debug.Log("대시 종료");
+    /// <summary>
+    /// 공격 가능 여부
+    /// </summary>
+    public bool CanAttack()
+    {
+        return playerWeapon != null && playerWeapon.CanAttack();
+    }
 
+    /// <summary>
+    /// 공격 실행
+    /// </summary>
+    public void PerformAttack()
+    {
+        if (playerWeapon != null)
+        {
+            playerWeapon.Attack();
+        }
+    }
+
+    /// <summary>
+    /// 입력 비활성화
+    /// </summary>
+    public void DisableInput()
+    {
+        inputEnabled = false;
+        moveInput = Vector2.zero;
+        dashInput = false;
+        attackInput = false;
+    }
+
+    /// <summary>
+    /// 입력 활성화
+    /// </summary>
+    public void EnableInput()
+    {
+        inputEnabled = true;
     }
 
     //디버그 용 : 이동방향 표시

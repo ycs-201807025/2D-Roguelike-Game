@@ -4,6 +4,7 @@ using UnityEngine;
 
 /// <summary>
 /// 플레이어 무기 공격
+/// 2025-12-04 (2일차) : 근접공격
 /// </summary>
 public class PlayerWeapon : MonoBehaviour
 {
@@ -29,17 +30,17 @@ public class PlayerWeapon : MonoBehaviour
             attackCooldown -= Time.deltaTime;
         }
 
-        //공격 입력(좌클릭)
-        if (Input.GetMouseButtonDown(0) && CanAttack())
-        {
-            Attack();
-        }
+        ////공격 입력(좌클릭) - 상태머신으로 이동
+        //if (Input.GetMouseButtonDown(0) && CanAttack())
+        //{
+        //    Attack();
+        //}
     }
 
     /// <summary>
     /// 공격 가능 여부
     /// </summary>
-    private bool CanAttack()
+    public bool CanAttack()
     {
         return currentWeapon != null && attackCooldown <= 0;
     }
@@ -47,8 +48,10 @@ public class PlayerWeapon : MonoBehaviour
     /// <summary>
     /// 공격 실행
     /// </summary>
-    private void Attack()
+    public void Attack()
     {
+        if (!CanAttack()) return;
+
         attackCooldown = currentWeapon.attackSpeed;
 
         if (currentWeapon.IsMelee)
@@ -63,7 +66,7 @@ public class PlayerWeapon : MonoBehaviour
         }
     }
 
-    ///<summary
+    ///<summary>
     ///근접공격
     ///</summary>
     private void MeleeAttack()
@@ -115,6 +118,16 @@ public class PlayerWeapon : MonoBehaviour
         //{
         //    proj.Initialize(currentWeapon.damage,currentWeapon.projectileSpeed);
         //}
+    }
+
+    /// <summary>
+    /// 무기 변경
+    /// </summary>
+    public void ChangeWeapon(WeaponData newWeapon)
+    {
+        currentWeapon = newWeapon;
+        attackCooldown = 0;
+        Debug.Log($"무기 변경: {newWeapon.weaponName}");
     }
 
     //디버그
