@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bd33391c94893e84aaf76299feb49911, type: 3}
+  m_Name: Room_Start
+  m_EditorClassIdentifier: 
+  roomName: Start Room
+  roomType: 1
+  roomPrefab: {fileID: 0}
+  roomSize: {x: 20, y: 15}
+  hasEnemies: 0
+  minEnemies: 0
+  maxEnemies: 0
+  enemyPrefabs: []
+  goldReward: 0
+  hasChest: 0
+  hasNorthDoor: 1
+  hasSouthDoor: 0
+  hasEastDoor: 0
+  hasWestDoor: 0
