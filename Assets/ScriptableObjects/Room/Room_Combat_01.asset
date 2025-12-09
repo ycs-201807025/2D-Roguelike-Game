@@ -18,13 +18,13 @@ MonoBehaviour:
   roomSize: {x: 20, y: 15}
   hasEnemies: 1
   minEnemies: 3
-  maxEnemies: 6
+  maxEnemies: 5
   enemyPrefabs:
   - {fileID: 109201163473874453, guid: d3b8c23d8009f2a41871db35867d5057, type: 3}
   - {fileID: 754550291046052782, guid: d00ae4a48a1f13941a193eb5a1304d76, type: 3}
-  goldReward: 10
+  goldReward: 25
   hasChest: 0
-  hasNorthDoor: 1
-  hasSouthDoor: 1
+  hasNorthDoor: 0
+  hasSouthDoor: 0
   hasEastDoor: 1
   hasWestDoor: 1

@@ -16,7 +16,7 @@ public enum RoomType
 }
 
 /// <summary>
-/// 방 데이터
+/// 방 데이터를 저장하는 ScriptableObject
 /// </summary>
 [CreateAssetMenu(fileName = "NewRoom", menuName = "Game/Room Data")]
 public class RoomData : ScriptableObject
@@ -26,7 +26,6 @@ public class RoomData : ScriptableObject
     public RoomType roomType = RoomType.Normal;
 
     [Header("Layout")]
-    public GameObject roomPrefab; // 방 레이아웃 프리팹
     public Vector2Int roomSize = new Vector2Int(20, 15); // 방 크기 (타일 단위)
 
     [Header("Enemy Spawning")]

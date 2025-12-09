@@ -1,9 +1,9 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// °³º° ¹æ °ü¸®
+/// ê°œë³„ ë°© ê´€ë¦¬
 /// </summary>
 public class Room : MonoBehaviour
 {
@@ -29,15 +29,15 @@ public class Room : MonoBehaviour
     private bool isActive = false;
     private List<GameObject> spawnedEnemies = new List<GameObject>();
 
-    // ÀÌº¥Æ®
+    // ì´ë²¤íŠ¸
     public System.Action OnRoomCleared;
 
     void Update()
     {
-        // ¹æÀÌ È°¼ºÈ­µÇ¾î ÀÖ°í, Å¬¸®¾îµÇÁö ¾Ê¾Ò´Ù¸é
-        if (isActive && !isCleared && roomData.hasEnemies)
+        // ë°©ì´ í™œì„±í™”ë˜ì–´ ìˆê³ , í´ë¦¬ì–´ë˜ì§€ ì•Šì•˜ë‹¤ë©´
+        if (isActive && !isCleared && roomData != null && roomData.hasEnemies)
         {
-            // ¸ğµç Àû Á¦°Å È®ÀÎ
+            // ëª¨ë“  ì  ì œê±° í™•ì¸
             spawnedEnemies.RemoveAll(enemy => enemy == null);
 
             if (spawnedEnemies.Count == 0)
@@ -48,7 +48,7 @@ public class Room : MonoBehaviour
     }
 
     /// <summary>
-    /// ¹æ È°¼ºÈ­
+    /// ë°© í™œì„±í™”
     /// </summary>
     public void ActivateRoom()
     {
@@ -57,47 +57,75 @@ public class Room : MonoBehaviour
         isActive = true;
         gameObject.SetActive(true);
 
-        Debug.Log($"Room Activated: {roomData.roomName}");
+        Debug.Log($"[ROOM] â•â•â• Activating Room â•â•â•");
 
-        // ½ÃÀÛ¹æÀÌ°í ÀûÀÌ ¾øÀ¸¸é
-        if (roomData.roomType == RoomType.Start && !roomData.hasEnemies)
+        // RoomData í™•ì¸
+        if (roomData == null)
         {
-            OpenDoors(); // ¹® ¿­±â (¼û±â±â)
+            Debug.LogError($"[ROOM] RoomData is NULL! í”„ë¦¬íŒ¹ì— RoomData ì—°ê²° í•„ìš”");
+            return;
         }
-        else if (roomData.hasEnemies && !isCleared)
+
+        Debug.Log($"[ROOM] Room Name: {roomData.roomName}");
+        Debug.Log($"[ROOM] Has Enemies: {roomData.hasEnemies}");
+        Debug.Log($"[ROOM] Is Cleared: {isCleared}");
+
+        // ì ì´ ì—†ëŠ” ë°©ì€ ë°”ë¡œ í´ë¦¬ì–´ ìƒíƒœë¡œ
+        if (!roomData.hasEnemies)
         {
+            Debug.Log($"[ROOM] â†’ No enemies, auto-clearing...");
+            isCleared = true;
+            OpenDoors();
+
+            Debug.Log($"[ROOM] â†’ Calling ActivatePortals...");
+            ActivatePortals();
+
+            Debug.Log($"[ROOM] âœ“ Room auto-cleared!");
+        }
+        // ì  ìƒì„±
+        else if (!isCleared)
+        {
+            Debug.Log($"[ROOM] â†’ Spawning enemies...");
             SpawnEnemies();
-            CloseDoors(); // ÀüÅõ Áß¿£ ¹® ´İ±â
-            DeactivatePortals();
+            CloseDoors(); // ì „íˆ¬ ì¤‘ì—” ë¬¸ ë‹«ê¸°
+            DeactivatePortals(); // í¬íƒˆ ë¹„í™œì„±í™”
         }
         else
         {
-            OpenDoors();
-            ActivatePortals();
+            Debug.Log($"[ROOM] â†’ Already cleared, opening...");
+            OpenDoors(); // ì´ë¯¸ í´ë¦¬ì–´í–ˆìœ¼ë©´ ë¬¸ ì—´ê¸°
+            ActivatePortals(); // í¬íƒˆ í™œì„±í™”
         }
+
+        Debug.Log($"[ROOM] â•â•â• Activation Complete â•â•â•");
     }
 
     /// <summary>
-    /// ¹æ ºñÈ°¼ºÈ­
+    /// ë°© ë¹„í™œì„±í™”
     /// </summary>
     public void DeactivateRoom()
     {
         isActive = false;
-        // ¹æÀ» ¿ÏÀüÈ÷ ²ôÁö ¾Ê°í º¸ÀÌ°Ô¸¸ À¯Áö (¼±ÅÃ»çÇ×)
-        // gameObject.SetActive(false);
+        // ë°©ì„ ì™„ì „íˆ ë„ì§€ ì•Šê³  ë³´ì´ê²Œë§Œ ìœ ì§€
     }
 
     /// <summary>
-    /// Àû »ı¼º
+    /// ì  ìƒì„±
     /// </summary>
     private void SpawnEnemies()
     {
-        if (roomData.enemyPrefabs.Length == 0) return;
+        if (roomData.enemyPrefabs.Length == 0)
+        {
+            Debug.LogWarning($"{roomData.roomName}: No enemy prefabs assigned!");
+            return;
+        }
 
         int enemyCount = Random.Range(roomData.minEnemies, roomData.maxEnemies + 1);
 
-        // ½ºÆù Æ÷ÀÎÆ®°¡ ÀÖÀ¸¸é °Å±â¿¡, ¾øÀ¸¸é ·£´ı À§Ä¡
-        if (enemySpawnPoints.Length > 0)
+        Debug.Log($"Spawning {enemyCount} enemies in {roomData.roomName}");
+
+        // ìŠ¤í° í¬ì¸íŠ¸ê°€ ìˆìœ¼ë©´ ê±°ê¸°ì—, ì—†ìœ¼ë©´ ëœë¤ ìœ„ì¹˜
+        if (enemySpawnPoints != null && enemySpawnPoints.Length > 0)
         {
             for (int i = 0; i < enemyCount && i < enemySpawnPoints.Length; i++)
             {
@@ -106,7 +134,7 @@ public class Room : MonoBehaviour
         }
         else
         {
-            // ·£´ı À§Ä¡ »ı¼º
+            // ëœë¤ ìœ„ì¹˜ ìƒì„±
             for (int i = 0; i < enemyCount; i++)
             {
                 Vector3 randomPos = GetRandomPositionInRoom();
@@ -114,26 +142,26 @@ public class Room : MonoBehaviour
             }
         }
 
-        Debug.Log($"Spawned {spawnedEnemies.Count} enemies in {roomData.roomName}");
+        Debug.Log($"Spawned {spawnedEnemies.Count} enemies");
     }
 
     /// <summary>
-    /// Æ¯Á¤ À§Ä¡¿¡ Àû »ı¼º
+    /// íŠ¹ì • ìœ„ì¹˜ì— ì  ìƒì„±
     /// </summary>
     private void SpawnEnemyAt(Vector3 position)
     {
         GameObject enemyPrefab = roomData.enemyPrefabs[Random.Range(0, roomData.enemyPrefabs.Length)];
         GameObject enemy = Instantiate(enemyPrefab, position, Quaternion.identity);
-        enemy.transform.SetParent(transform); // ¹æÀÇ ÀÚ½ÄÀ¸·Î
+        enemy.transform.SetParent(transform); // ë°©ì˜ ìì‹ìœ¼ë¡œ
         spawnedEnemies.Add(enemy);
     }
 
     /// <summary>
-    /// ¹æ ³» ·£´ı À§Ä¡
+    /// ë°© ë‚´ ëœë¤ ìœ„ì¹˜
     /// </summary>
     private Vector3 GetRandomPositionInRoom()
     {
-        // ¹æ Áß½É¿¡¼­ ·£´ı ¿ÀÇÁ¼Â
+        // ë°© ì¤‘ì‹¬ì—ì„œ ëœë¤ ì˜¤í”„ì…‹
         float offsetX = Random.Range(-roomData.roomSize.x / 3f, roomData.roomSize.x / 3f);
         float offsetY = Random.Range(-roomData.roomSize.y / 3f, roomData.roomSize.y / 3f);
 
@@ -141,24 +169,23 @@ public class Room : MonoBehaviour
     }
 
     /// <summary>
-    /// ¹æ Å¬¸®¾î
+    /// ë°© í´ë¦¬ì–´
     /// </summary>
     private void ClearRoom()
     {
         isCleared = true;
         OpenDoors();
-        ActivatePortals(); // Æ÷Å» È°¼ºÈ­
+        ActivatePortals(); // í¬íƒˆ í™œì„±í™”
 
-        Debug.Log($"Room Cleared: {roomData.roomName}");
+        Debug.Log($"â˜… Room Cleared: {roomData.roomName} â˜…");
 
-        // º¸»ó Áö±Ş (ÃßÈÄ ±¸Çö)
-        // GiveRewards();
+        // ë³´ìƒ ì§€ê¸‰ (ì¶”í›„ êµ¬í˜„)
 
         OnRoomCleared?.Invoke();
     }
 
     /// <summary>
-    /// ¹® ¿­±â
+    /// ë¬¸ ì—´ê¸°
     /// </summary>
     private void OpenDoors()
     {
@@ -169,7 +196,7 @@ public class Room : MonoBehaviour
     }
 
     /// <summary>
-    /// ¹® ´İ±â
+    /// ë¬¸ ë‹«ê¸°
     /// </summary>
     private void CloseDoors()
     {
@@ -180,16 +207,37 @@ public class Room : MonoBehaviour
     }
 
     /// <summary>
-    /// Æ÷Å» È°¼ºÈ­
+    /// í¬íƒˆ í™œì„±í™”
     /// </summary>
     private void ActivatePortals()
     {
-        if (nextPortal != null) nextPortal.SetActive(true);
-        if (previousPortal != null) previousPortal.SetActive(true);
+        Debug.Log($"[ROOM] ActivatePortals called for {roomData.roomName}");
+        Debug.Log($"[ROOM] nextPortal is null? {nextPortal == null}");
+        Debug.Log($"[ROOM] previousPortal is null? {previousPortal == null}");
+
+        if (nextPortal != null)
+        {
+            nextPortal.SetActive(true);
+            Debug.Log("â†’ Next portal activated!");
+        }
+        else
+        {
+            Debug.LogError($"[ROOM] Next portal is NULL in {roomData.roomName}! Inspectorì—ì„œ ì—°ê²° í•„ìš”");
+        }
+
+        if (previousPortal != null)
+        {
+            previousPortal.SetActive(true);
+            Debug.Log("â† Previous portal activated!");
+        }
+        else
+        {
+            Debug.LogWarning($"[ROOM] Previous portal is NULL (ì‹œì‘ë°©ì´ë©´ ì •ìƒ)");
+        }
     }
 
     /// <summary>
-    /// Æ÷Å» ºñÈ°¼ºÈ­
+    /// í¬íƒˆ ë¹„í™œì„±í™”
     /// </summary>
     private void DeactivatePortals()
     {
@@ -198,7 +246,7 @@ public class Room : MonoBehaviour
     }
 
     /// <summary>
-    /// ÇÃ·¹ÀÌ¾î ½ºÆù À§Ä¡
+    /// í”Œë ˆì´ì–´ ìŠ¤í° ìœ„ì¹˜
     /// </summary>
     public Vector3 GetPlayerSpawnPosition()
     {

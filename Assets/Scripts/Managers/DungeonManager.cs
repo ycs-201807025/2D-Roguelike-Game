@@ -1,21 +1,20 @@
-using System.Collections;
+ï»¿using System.Collections;
 using UnityEngine;
 using System.Collections.Generic;
 
 /// <summary>
-/// ´øÀü »ı¼º ¹× °ü¸®
-/// 4ÀÏÂ÷: °£´ÜÇÑ ¼±Çü ´øÀü
+/// ë˜ì „ ìƒì„± ë° ê´€ë¦¬
+/// 4ì¼ì°¨: ê°„ë‹¨í•œ ì„ í˜• ë˜ì „
 /// </summary>
 public class DungeonManager : MonoBehaviour
 {
     [Header("Room Prefabs")]
     [SerializeField] private GameObject startRoomPrefab;
     [SerializeField] private GameObject[] normalRoomPrefabs;
-    [SerializeField] private GameObject bossRoomPrefab; // ÃßÈÄ
 
     [Header("Dungeon Settings")]
-    [SerializeField] private int roomCount = 5; // ÃÑ ¹æ °³¼ö
-    [SerializeField] private float roomSpacing = 30f; // ¹æ »çÀÌ °£°İ
+    [SerializeField] private int roomCount = 5; // ì´ ë°© ê°œìˆ˜
+    [SerializeField] private float roomSpacing = 30f; // ë°© ì‚¬ì´ ê°„ê²©
 
     [Header("Player")]
     [SerializeField] private GameObject player;
@@ -28,30 +27,40 @@ public class DungeonManager : MonoBehaviour
 
     void Start()
     {
+        Debug.Log("=== DUNGEON MANAGER START ===");
         GenerateDungeon();
         StartDungeon();
     }
 
     /// <summary>
-    /// ´øÀü »ı¼º (°£´ÜÇÑ ¼±Çü ±¸Á¶)
+    /// ë˜ì „ ìƒì„± (ê°„ë‹¨í•œ ì„ í˜• êµ¬ì¡°)
     /// </summary>
     private void GenerateDungeon()
     {
-        // ½ÃÀÛ¹æ
+        Debug.Log($"Generating dungeon with {roomCount} rooms...");
+
+        // ì‹œì‘ë°©
         GameObject startRoomObj = Instantiate(startRoomPrefab, Vector3.zero, Quaternion.identity);
         startRoomObj.transform.SetParent(transform);
+        startRoomObj.name = "Room_0_Start";
         Room startRoom = startRoomObj.GetComponent<Room>();
+
+        if (startRoom == null)
+        {
+            Debug.LogError("Start room prefab doesn't have Room component!");
+            return;
+        }
+
         rooms.Add(startRoom);
+        Debug.Log($"âœ“ Start room created at (0, 0)");
 
-        Debug.Log("Start room created");
-
-        // ÀÏ¹İ ¹æµé (¼±ÇüÀ¸·Î ¹èÄ¡)
+        // ì¼ë°˜ ë°©ë“¤ (ì„ í˜•ìœ¼ë¡œ ë°°ì¹˜)
         for (int i = 0; i < roomCount - 1; i++)
         {
-            // ·£´ı ¹æ ¼±ÅÃ
+            // ëœë¤ ë°© ì„ íƒ
             GameObject roomPrefab = normalRoomPrefabs[Random.Range(0, normalRoomPrefabs.Length)];
 
-            // À§Ä¡ °è»ê (¿À¸¥ÂÊÀ¸·Î ¹èÄ¡)
+            // ìœ„ì¹˜ ê³„ì‚° (ì˜¤ë¥¸ìª½ìœ¼ë¡œ ë°°ì¹˜)
             Vector3 position = new Vector3((i + 1) * roomSpacing, 0, 0);
 
             GameObject roomObj = Instantiate(roomPrefab, position, Quaternion.identity);
@@ -59,22 +68,27 @@ public class DungeonManager : MonoBehaviour
             roomObj.name = $"Room_{i + 1}";
 
             Room room = roomObj.GetComponent<Room>();
-            rooms.Add(room);
+            if (room == null)
+            {
+                Debug.LogError($"Room prefab {roomPrefab.name} doesn't have Room component!");
+                continue;
+            }
 
-            Debug.Log($"Room {i + 1} created at {position}");
+            rooms.Add(room);
+            Debug.Log($"âœ“ Room {i + 1} created at {position}");
         }
 
-        // ¸ğµç ¹æ ºñÈ°¼ºÈ­
+        // ëª¨ë“  ë°© ë¹„í™œì„±í™”
         foreach (Room room in rooms)
         {
-            room.DeactivateRoom();
+            room.gameObject.SetActive(false);
         }
 
-        Debug.Log($"Dungeon generated with {rooms.Count} rooms");
+        Debug.Log($"=== Dungeon generated: {rooms.Count} rooms ===");
     }
 
     /// <summary>
-    /// ´øÀü ½ÃÀÛ
+    /// ë˜ì „ ì‹œì‘
     /// </summary>
     private void StartDungeon()
     {
@@ -84,115 +98,152 @@ public class DungeonManager : MonoBehaviour
             return;
         }
 
-        // Ã¹ ¹æ È°¼ºÈ­
+        Debug.Log("Starting dungeon...");
+
+        // í”Œë ˆì´ì–´ ì°¾ê¸°
+        if (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player");
+        }
+
+        if (player == null)
+        {
+            Debug.LogError("Player not found!");
+        }
+
+        // ì²« ë°© í™œì„±í™”
         currentRoomIndex = 0;
         EnterRoom(0);
     }
 
     /// <summary>
-    /// ¹æ ÀÔÀå
+    /// ë°© ì…ì¥
     /// </summary>
     public void EnterRoom(int roomIndex)
     {
-        if (roomIndex < 0 || roomIndex >= rooms.Count) return;
+        if (roomIndex < 0 || roomIndex >= rooms.Count)
+        {
+            Debug.LogError($"Invalid room index: {roomIndex}");
+            return;
+        }
 
-        // ÀÌÀü ¹æ ºñÈ°¼ºÈ­
+        Debug.Log($"\n>>> Entering Room {roomIndex} <<<");
+
+        // ì´ì „ ë°© ë¹„í™œì„±í™”
         if (currentRoomIndex >= 0 && currentRoomIndex < rooms.Count)
         {
             rooms[currentRoomIndex].DeactivateRoom();
         }
 
-        // »õ ¹æ È°¼ºÈ­
+        // ìƒˆ ë°© í™œì„±í™”
         currentRoomIndex = roomIndex;
         Room currentRoom = rooms[currentRoomIndex];
         currentRoom.ActivateRoom();
 
-        // ÇÃ·¹ÀÌ¾î ÀÌµ¿
+        // í”Œë ˆì´ì–´ ì´ë™
         if (player != null)
         {
-            player.transform.position = currentRoom.GetPlayerSpawnPosition();
+            Vector3 spawnPos = currentRoom.GetPlayerSpawnPosition();
+            player.transform.position = spawnPos;
+            Debug.Log($"Player moved to {spawnPos}");
         }
 
-        // Ä«¸Ş¶ó °æ°è ¼³Á¤
+        // ì¹´ë©”ë¼ ê²½ê³„ ì„¤ì •
         if (cameraRoomBounds != null)
         {
             cameraRoomBounds.SetCurrentRoom(currentRoom);
         }
 
-        // ¹æ Å¬¸®¾î ÀÌº¥Æ® ±¸µ¶
+        // ë°© í´ë¦¬ì–´ ì´ë²¤íŠ¸ êµ¬ë…
         currentRoom.OnRoomCleared += OnCurrentRoomCleared;
 
-        Debug.Log($"Entered room {currentRoomIndex}: {currentRoom.RoomData.roomName}");
+        Debug.Log($"Current Room: {currentRoom.RoomData.roomName}");
     }
 
     /// <summary>
-    /// ÇöÀç ¹æ Å¬¸®¾î ½Ã
+    /// í˜„ì¬ ë°© í´ë¦¬ì–´ ì‹œ
     /// </summary>
     private void OnCurrentRoomCleared()
     {
-        Debug.Log("Current room cleared!");
+        Debug.Log(">>> Current room cleared! <<<");
 
-        // ´ÙÀ½ ¹æÀÌ ÀÖÀ¸¸é Æ÷Å» »ı¼º (¶Ç´Â ÀÚµ¿ ÀÌµ¿)
+        // ë‹¤ìŒ ë°©ì´ ìˆìœ¼ë©´
         if (currentRoomIndex < rooms.Count - 1)
         {
-            Debug.Log("Next room available. Press 'N' to continue (ÀÓ½Ã)");
+            Debug.Log("â†’ Next room available. Use portal or press [N]");
         }
         else
         {
-            Debug.Log("Dungeon completed!");
+            Debug.Log("â˜…â˜…â˜… DUNGEON COMPLETED! â˜…â˜…â˜…");
             OnDungeonCompleted();
         }
     }
 
     /// <summary>
-    /// ´ÙÀ½ ¹æÀ¸·Î ÀÌµ¿
+    /// ë‹¤ìŒ ë°©ìœ¼ë¡œ ì´ë™
     /// </summary>
     public void MoveToNextRoom()
     {
+        Debug.Log("[MANAGER] MoveToNextRoom called");
+
         if (currentRoomIndex < rooms.Count - 1)
         {
-            // ÇöÀç ¹æÀÌ Å¬¸®¾îµÇ¾ú´ÂÁö È®ÀÎ
+            // í˜„ì¬ ë°©ì´ í´ë¦¬ì–´ë˜ì—ˆëŠ”ì§€ í™•ì¸
             if (rooms[currentRoomIndex].IsCleared)
             {
                 EnterRoom(currentRoomIndex + 1);
             }
             else
             {
-                Debug.Log("ÇöÀç ¹æÀ» Å¬¸®¾îÇÏ¼¼¿ä!");
+                Debug.LogWarning("í˜„ì¬ ë°©ì„ ë¨¼ì € í´ë¦¬ì–´í•˜ì„¸ìš”!");
             }
+        }
+        else
+        {
+            Debug.Log("ë§ˆì§€ë§‰ ë°©ì…ë‹ˆë‹¤!");
         }
     }
 
     /// <summary>
-    /// ÀÌÀü ¹æÀ¸·Î ÀÌµ¿ (¹éÆ®·¡Å·)
+    /// ì´ì „ ë°©ìœ¼ë¡œ ì´ë™
     /// </summary>
     public void MoveToPreviousRoom()
     {
+        Debug.Log("[MANAGER] MoveToPreviousRoom called");
+
         if (currentRoomIndex > 0)
         {
             EnterRoom(currentRoomIndex - 1);
         }
+        else
+        {
+            Debug.Log("ì²« ë²ˆì§¸ ë°©ì…ë‹ˆë‹¤!");
+        }
     }
 
     /// <summary>
-    /// ´øÀü ¿Ï·á
+    /// ë˜ì „ ì™„ë£Œ
     /// </summary>
     private void OnDungeonCompleted()
     {
         Debug.Log("=== DUNGEON CLEARED! ===");
-        // º¸»ó Áö±Ş, ´ÙÀ½ ÃşÀ¸·Î ÀÌµ¿ µî (ÃßÈÄ ±¸Çö)
+        // ë³´ìƒ ì§€ê¸‰, ë‹¤ìŒ ì¸µìœ¼ë¡œ ì´ë™ ë“± (ì¶”í›„ êµ¬í˜„)
     }
 
-    // ÀÓ½Ã: Å°º¸µå·Î ¹æ ÀÌµ¿ Å×½ºÆ®
+    // ì„ì‹œ: í‚¤ë³´ë“œë¡œ ë°© ì´ë™ í…ŒìŠ¤íŠ¸
     void Update()
     {
+        // Ní‚¤: ë‹¤ìŒ ë°©
         if (Input.GetKeyDown(KeyCode.N))
         {
+            Debug.Log("[INPUT] N key pressed");
             MoveToNextRoom();
         }
 
+        // Bí‚¤: ì´ì „ ë°©
         if (Input.GetKeyDown(KeyCode.B))
         {
+            Debug.Log("[INPUT] B key pressed");
             MoveToPreviousRoom();
         }
     }

@@ -3479,11 +3479,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9bf09a24fd2482b48b205543da5b2dc9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  startRoomPrefab: {fileID: 9082106343250216777, guid: 7b03e34372f788548ae1af0153ecb6df, type: 3}
+  startRoomPrefab: {fileID: 4932435537254432761, guid: 979abf38cbbace74ebd53c16556aa696, type: 3}
   normalRoomPrefabs:
-  - {fileID: 3239167123701371146, guid: a01be0b693ba7954eac6ab9f65eca572, type: 3}
-  - {fileID: 2929818347994386274, guid: 92da8a90d5309f74abc0e1f545bedad4, type: 3}
-  bossRoomPrefab: {fileID: 0}
+  - {fileID: 6881062380907822671, guid: a01be0b693ba7954eac6ab9f65eca572, type: 3}
+  - {fileID: 6834025864700219975, guid: 92da8a90d5309f74abc0e1f545bedad4, type: 3}
   roomCount: 5
   roomSpacing: 30
   player: {fileID: 666362660}
@@ -4611,6 +4610,7 @@ GameObject:
   - component: {fileID: 922865764}
   - component: {fileID: 922865767}
   - component: {fileID: 922865768}
+  - component: {fileID: 922865769}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -4738,7 +4738,25 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 403530a07c1f82646b095e0868c74959, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  padding: 5
+  padding: 2
+--- !u!114 &922865769
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 922865763}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 508ac414137d3fd429e7c7b9d00d24fb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  dungeonManager: {fileID: 209138141}
+  roomIconSize: 35
+  roomSpacing: 45
+  currentRoomColor: {r: 0, g: 1, b: 0, a: 1}
+  clearedRoomColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  unvisitedRoomColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &1418676982
 GameObject:
   m_ObjectHideFlags: 3
@@ -4944,8 +4962,8 @@ SpriteRenderer:
   m_AutoUVMaxDistance: 0.5
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
-  m_SortingLayerID: 130721617
-  m_SortingLayer: 1
+  m_SortingLayerID: 1419085083
+  m_SortingLayer: 5
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: 410dc6218913ec648943457fe07f9eb5, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}

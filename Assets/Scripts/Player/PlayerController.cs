@@ -221,7 +221,7 @@ public class PlayerController : MonoBehaviour
         if (dashAfterImage != null)
         {
             dashAfterImage.StartDash();
-            Debug.Log("DashAfterimage.StartDash() »£√‚µ ");
+            //Debug.Log("DashAfterimage.StartDash() »£√‚µ ");
         }
 
         //æ÷¥œ∏ﬁ¿Ãº«
@@ -229,7 +229,7 @@ public class PlayerController : MonoBehaviour
         {
             animator.SetTrigger("Dash");
         }
-        Debug.Log("PlayerController.StartDash() »£√‚µ ");
+        //Debug.Log("PlayerController.StartDash() »£√‚µ ");
     }
 
     /// <summary>
@@ -252,9 +252,9 @@ public class PlayerController : MonoBehaviour
         if (dashAfterImage != null)
         {
             dashAfterImage.StopDash();
-            Debug.Log("DashAfterimage.StopDash() »£√‚µ ");
+            //Debug.Log("DashAfterimage.StopDash() »£√‚µ ");
         }
-        Debug.Log("PlayerController.EndDash() »£√‚µ ");
+        //Debug.Log("PlayerController.EndDash() »£√‚µ ");
     }
 
     /// <summary>

@@ -29,7 +29,12 @@ public class RoomPortal : MonoBehaviour
             spriteRenderer = GetComponent<SpriteRenderer>();
         }
 
-        SetActive(false);
+        SetActive(false); // 처음엔 비활성
+
+        if (dungeonManager == null)
+        {
+            Debug.LogError("DungeonManager not found in scene!");
+        }
     }
 
     void Update()
@@ -52,6 +57,8 @@ public class RoomPortal : MonoBehaviour
         {
             spriteRenderer.color = active ? activeColor : inactiveColor;
         }
+
+        Debug.Log($"Portal {gameObject.name} → {(active ? "ACTIVE" : "inactive")}");
     }
 
     /// <summary>
@@ -61,11 +68,11 @@ public class RoomPortal : MonoBehaviour
     {
         if (dungeonManager == null)
         {
-            Debug.LogError("DungeonManager not found! 포탈이 작동 안 함");
+            Debug.LogError("DungeonManager is NULL! Cannot use portal");
             return;
         }
 
-        Debug.Log($"Using portal: {(isNextRoom ? "Next" : "Previous")} room");
+        Debug.Log($"[PORTAL] Using: {(isNextRoom ? "Next" : "Previous")} room");
 
         if (isNextRoom)
         {
@@ -79,16 +86,20 @@ public class RoomPortal : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D collision)
     {
-        Debug.Log($"Portal trigger: {collision.name}, Tag: {collision.tag}");
+        Debug.Log($"[PORTAL] Trigger Enter: {collision.name}, Tag: {collision.tag}");
 
         if (collision.CompareTag("Player"))
         {
             playerInRange = true;
-            Debug.Log($"Player in range! Active: {isActive}");
+            Debug.Log($"[PORTAL] Player in range! Active: {isActive}");
 
             if (isActive)
             {
-                Debug.Log($"Press {interactKey} to {(isNextRoom ? "continue" : "go back")}");
+                Debug.Log($"[PORTAL] Press [{interactKey}] to {(isNextRoom ? "continue" : "go back")}");
+            }
+            else
+            {
+                Debug.Log("[PORTAL] Portal is inactive - clear room first!");
             }
         }
     }
@@ -98,6 +109,7 @@ public class RoomPortal : MonoBehaviour
         if (collision.CompareTag("Player"))
         {
             playerInRange = false;
+            Debug.Log("[PORTAL] Player left range");
         }
     }
 
@@ -109,12 +121,13 @@ public class RoomPortal : MonoBehaviour
             Vector3 screenPos = Camera.main.WorldToScreenPoint(transform.position + Vector3.up * 2);
 
             GUIStyle style = new GUIStyle(GUI.skin.label);
-            style.fontSize = 14;
-            style.normal.textColor = Color.white;
+            style.fontSize = 18;
+            style.normal.textColor = Color.yellow;
             style.alignment = TextAnchor.MiddleCenter;
+            style.fontStyle = FontStyle.Bold;
 
             string text = $"[{interactKey}] {(isNextRoom ? "다음 방" : "이전 방")}";
-            GUI.Label(new Rect(screenPos.x - 50, Screen.height - screenPos.y - 20, 100, 30), text, style);
+            GUI.Label(new Rect(screenPos.x - 60, Screen.height - screenPos.y - 30, 120, 40), text, style);
         }
     }
 }
