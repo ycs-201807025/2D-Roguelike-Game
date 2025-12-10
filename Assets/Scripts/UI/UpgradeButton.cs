@@ -11,7 +11,7 @@ public class UpgradeButton : MonoBehaviour
 {
     [Header("Data")]
     [SerializeField] private UpgradeData upgradeData;
-
+     
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI levelText;
@@ -126,11 +126,11 @@ public class UpgradeButton : MonoBehaviour
             UpdateUI();
 
             // 다른 버튼들도 업데이트 (영혼 개수 변경됨)
-            UpgradeMenuManager manager = FindObjectOfType<UpgradeMenuManager>();
-            if (manager != null)
-            {
-                manager.UpdateAllButtons();
-            }
+            //UpgradeMenuManager manager = FindObjectOfType<UpgradeMenuManager>();
+            //if (manager != null)
+            //{
+            //    manager.UpdateAllButtons();
+            //}
         }
     }
 
