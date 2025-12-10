@@ -116,13 +116,20 @@ public class PlayerHealth : MonoBehaviour
     {
         Debug.Log("[PLAYER HEALTH] Player died!");
 
-        // 게임오버 처리 (추후 구현)
-        // GameManager.Instance.GameOver();
+        // 영혼 획득 계산 (사망 시에만)
+        if (uiPresenter != null && playerStats != null)
+        {
+            // 간단한 계산: 현재 골드의 10%
+            int soulsEarned = playerStats.Gold / 10;
+            if (soulsEarned > 0)
+            {
+                playerStats.AddSouls(soulsEarned);
+                Debug.Log($"[PLAYER HEALTH] Earned {soulsEarned} souls from {playerStats.Gold} gold");
+            }
+        }
 
-        // 임시: 씬 재시작
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
-        );
+        // 게임오버 처리는 GameOverManager가 자동으로 처리
+        // (PlayerStats.OnPlayerDied 이벤트 발생)
     }
 
     // Getters

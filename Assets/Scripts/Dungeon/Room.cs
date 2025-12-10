@@ -179,11 +179,29 @@ public class Room : MonoBehaviour
 
         Debug.Log($"★ Room Cleared: {roomData.roomName} ★");
 
-        // 보상 지급 (추후 구현)
+        // 보상 지급
+        GiveRewards();
 
         OnRoomCleared?.Invoke();
     }
+    /// <summary>
+    /// 보상 지급
+    /// </summary>
+    private void GiveRewards()
+    {
+        if (roomData == null) return;
 
+        PlayerUIPresenter presenter = FindObjectOfType<PlayerUIPresenter>();
+        if (presenter != null)
+        {
+            PlayerStats stats = presenter.GetPlayerStats();
+            if (stats != null && roomData.goldReward > 0)
+            {
+                stats.AddGold(roomData.goldReward);
+                Debug.Log($"[ROOM] Reward: {roomData.goldReward} gold");
+            }
+        }
+    }
     /// <summary>
     /// 문 열기
     /// </summary>

@@ -141,6 +141,17 @@ public class Enemy : MonoBehaviour
     {
         Debug.Log($"{data.enemyName} »ç¸Á");
 
+        // °ñµå µå·Ó
+        PlayerUIPresenter presenter = FindObjectOfType<PlayerUIPresenter>();
+        if (presenter != null && data != null)
+        {
+            PlayerStats stats = presenter.GetPlayerStats();
+            if (stats != null)
+            {
+                stats.AddGold(data.goldDrop);
+                Debug.Log($"[ENEMY] Dropped {data.goldDrop} gold");
+            }
+        }
         //ÀçÈ­ µå¶ø
         //DropRewards();
 
