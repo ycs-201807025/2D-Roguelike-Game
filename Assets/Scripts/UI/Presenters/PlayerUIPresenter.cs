@@ -17,19 +17,116 @@ public class PlayerUIPresenter : MonoBehaviour
 
     void Start()
     {
-        // Model 초기화
-        playerStats = new PlayerStats(100); // 최대 체력 100
+        // PlayerStats 찾기
+        playerStats = PlayerStats.Instance;
 
-        // Model 이벤트 구독
-        playerStats.OnHealthChanged += OnHealthChanged;
-        playerStats.OnGoldChanged += OnGoldChanged;
-        playerStats.OnSoulsChanged += OnSoulsChanged;
-        playerStats.OnPlayerDied += OnPlayerDied;
+        if (playerStats == null)
+        {
+            Debug.LogError("[PRESENTER] PlayerStats.Instance is NULL!");
+            return;
+        }
+
+        // View 유효성 체크
+        if (healthBarView == null)
+        {
+            Debug.LogError("[PRESENTER] HealthBarView is not assigned!");
+        }
+
+        if (currencyView == null)
+        {
+            Debug.LogError("[PRESENTER] CurrencyView is not assigned!");
+        }
+
+        // 이벤트 구독
+        SubscribeToEvents();
 
         // 초기 UI 업데이트
         UpdateAllUI();
 
         Debug.Log("[PRESENTER] PlayerUIPresenter initialized");
+    }
+
+    void SubscribeToEvents()
+    {
+        if (playerStats == null) return;
+
+        playerStats.OnHealthChanged += OnHealthChanged;
+        playerStats.OnGoldChanged += OnGoldChanged;
+        playerStats.OnSoulsChanged += OnSoulsChanged;
+    }
+
+    void UpdateAllUI()
+    {
+        if (playerStats == null) return;
+
+        if (healthBarView != null)
+        {
+            healthBarView.UpdateHealth(playerStats.CurrentHealth, playerStats.MaxHealth);
+        }
+
+        if (currencyView != null)
+        {
+            currencyView.UpdateGold(playerStats.Gold);
+            currencyView.UpdateSouls(playerStats.Souls);
+        }
+    }
+
+    void OnHealthChanged(int current, int max)
+    {
+        if (healthBarView != null)
+        {
+            healthBarView.UpdateHealth(current, max);
+        }
+    }
+
+    void OnGoldChanged(int amount)
+    {
+        if (currencyView != null)
+        {
+            currencyView.UpdateGold(amount);
+        }
+    }
+
+    void OnSoulsChanged(int amount)
+    {
+        if (currencyView != null)
+        {
+            currencyView.UpdateSouls(amount);
+        }
+    }
+
+    void Update()
+    {
+        // null 체크 추가!
+        if (playerStats == null)
+        {
+            return;
+        }
+
+        // 테스트 키들
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            Debug.Log("[PRESENTER] T key - Taking damage");
+            playerStats.TakeDamage(10);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Y))
+        {
+            Debug.Log("[PRESENTER] Y key - Healing");
+            playerStats.Heal(20);
+        }
+
+        if (Input.GetKeyDown(KeyCode.U))
+        {
+            Debug.Log("[PRESENTER] U key - Adding gold");
+            playerStats.AddGold(10);
+        }
+
+        if (Input.GetKeyDown(KeyCode.I))
+        {
+            Debug.Log("[PRESENTER] I key - Adding souls");
+            playerStats.AddSouls(5);
+        }
     }
 
     void OnDestroy()
@@ -40,94 +137,13 @@ public class PlayerUIPresenter : MonoBehaviour
             playerStats.OnHealthChanged -= OnHealthChanged;
             playerStats.OnGoldChanged -= OnGoldChanged;
             playerStats.OnSoulsChanged -= OnSoulsChanged;
-            playerStats.OnPlayerDied -= OnPlayerDied;
         }
     }
 
-    /// <summary>
-    /// 모든 UI 업데이트
-    /// </summary>
-    private void UpdateAllUI()
+    // Getter (다른 스크립트에서 접근용)
+    public PlayerStats GetPlayerStats()
     {
-        OnHealthChanged(playerStats.CurrentHealth, playerStats.MaxHealth);
-        OnGoldChanged(playerStats.Gold);
-        OnSoulsChanged(playerStats.Souls);
-    }
-
-    /// <summary>
-    /// 체력 변경 시 (Model → View)
-    /// </summary>
-    private void OnHealthChanged(int current, int max)
-    {
-        if (healthBarView != null)
-        {
-            healthBarView.UpdateHealth(current, max);
-        }
-    }
-
-    /// <summary>
-    /// 골드 변경 시 (Model → View)
-    /// </summary>
-    private void OnGoldChanged(int amount)
-    {
-        if (currencyView != null)
-        {
-            currencyView.UpdateGold(amount);
-        }
-    }
-
-    /// <summary>
-    /// 영혼 변경 시 (Model → View)
-    /// </summary>
-    private void OnSoulsChanged(int amount)
-    {
-        if (currencyView != null)
-        {
-            currencyView.UpdateSouls(amount);
-        }
-    }
-
-    /// <summary>
-    /// 플레이어 사망 시
-    /// </summary>
-    private void OnPlayerDied()
-    {
-        Debug.Log("[PRESENTER] Player died!");
-        // 게임오버 화면 표시 (추후 구현)
-    }
-
-    // Public API (다른 스크립트에서 호출)
-    public PlayerStats GetPlayerStats() => playerStats;
-
-    // 테스트용 메서드들
-    void Update()
-    {
-        // T키: 데미지 테스트
-        if (Input.GetKeyDown(KeyCode.T))
-        {
-            playerStats.TakeDamage(10);
-            Debug.Log("Test: Took 10 damage");
-        }
-
-        // Y키: 회복 테스트
-        if (Input.GetKeyDown(KeyCode.Y))
-        {
-            playerStats.Heal(20);
-            Debug.Log("Test: Healed 20");
-        }
-
-        // U키: 골드 추가 테스트
-        if (Input.GetKeyDown(KeyCode.U))
-        {
-            playerStats.AddGold(10);
-            Debug.Log("Test: Added 10 gold");
-        }
-
-        // I키: 영혼 추가 테스트
-        if (Input.GetKeyDown(KeyCode.I))
-        {
-            playerStats.AddSouls(5);
-            Debug.Log("Test: Added 5 souls");
-        }
+        return playerStats;
     }
 }
+

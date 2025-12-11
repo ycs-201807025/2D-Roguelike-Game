@@ -67,6 +67,8 @@ public class PlayerStats : MonoBehaviour
         currentHealth = maxHealth;
 
         Debug.Log($"[STATS] Initialized - HP: {maxHealth}, ATK: {attackDamage}, SPD: {moveSpeed}");
+        Debug.Log($"[STATS] Crit Chance: {critChance}%, Crit Damage: {critDamage}%");
+        Debug.Log($"[STATS] Start Gold: {gold}");
     }
 
     /// <summary>

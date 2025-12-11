@@ -1,17 +1,17 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// ¿µ±¸ °­È­ ½Ã½ºÅÛ °ü¸®
+/// ì˜êµ¬ ê°•í™” ì‹œìŠ¤í…œ ê´€ë¦¬
 /// </summary>
 public class UpgradeManager : MonoBehaviour
 {
     [Header("UI References")]
     [SerializeField] private GameObject upgradePanel;
-    [SerializeField] private Transform buttonContainer; // ScrollViewÀÇ Content
+    [SerializeField] private Transform buttonContainer; // ScrollViewì˜ Content
     [SerializeField] private GameObject upgradeButtonPrefab;
     [SerializeField] private TextMeshProUGUI soulsText;
     [SerializeField] private Button closeButton;
@@ -33,28 +33,28 @@ public class UpgradeManager : MonoBehaviour
 
         SetupUI();
 
-        // Ã³À½¿£ ÆĞ³Î ºñÈ°¼ºÈ­
+        // ì²˜ìŒì—” íŒ¨ë„ ë¹„í™œì„±í™”
         upgradePanel.SetActive(false);
     }
 
     void SetupUI()
     {
-        // ±âÁ¸ ¹öÆ°µé ¸ğµÎ »èÁ¦ (Àç»ı¼º)
+        // ê¸°ì¡´ ë²„íŠ¼ë“¤ ëª¨ë‘ ì‚­ì œ (ì¬ìƒì„±)
         foreach (Transform child in buttonContainer)
         {
             Destroy(child.gameObject);
         }
 
-        // ¸ğµç ¾÷±×·¹ÀÌµå¿¡ ´ëÇÑ ¹öÆ° »ı¼º
+        // ëª¨ë“  ì—…ê·¸ë ˆì´ë“œì— ëŒ€í•œ ë²„íŠ¼ ìƒì„±
         foreach (var upgradeData in allUpgrades)
         {
             CreateUpgradeButton(upgradeData);
         }
 
-        // ´İ±â ¹öÆ° ÀÌº¥Æ®
+        // ë‹«ê¸° ë²„íŠ¼ ì´ë²¤íŠ¸
         closeButton.onClick.AddListener(ClosePanel);
 
-        // ÃÊ±â ¿µÈ¥ °³¼ö ¾÷µ¥ÀÌÆ®
+        // ì´ˆê¸° ì˜í˜¼ ê°œìˆ˜ ì—…ë°ì´íŠ¸
         UpdateSoulsDisplay();
     }
 
@@ -70,13 +70,13 @@ public class UpgradeManager : MonoBehaviour
     }
 
     /// <summary>
-    /// ¾÷±×·¹ÀÌµå ±¸¸Å ½Ãµµ
+    /// ì—…ê·¸ë ˆì´ë“œ êµ¬ë§¤ ì‹œë„
     /// </summary>
     public bool TryPurchaseUpgrade(UpgradeData data)
     {
         int currentLevel = dataManager.GetUpgradeLevel(data.upgradeType);
 
-        // ÃÖ´ë ·¹º§ Ã¼Å©
+        // ìµœëŒ€ ë ˆë²¨ ì²´í¬
         if (currentLevel >= data.maxLevel)
         {
             Debug.Log($"[UPGRADE] {data.upgradeName} is already max level!");
@@ -85,30 +85,36 @@ public class UpgradeManager : MonoBehaviour
 
         int cost = data.costs[currentLevel];
 
-        // ¿µÈ¥ ºÎÁ· Ã¼Å©
+        // ì˜í˜¼ ë¶€ì¡± ì²´í¬
         if (dataManager.souls < cost)
         {
             Debug.Log($"[UPGRADE] Not enough souls! Need: {cost}, Have: {dataManager.souls}");
             return false;
         }
 
-        // ±¸¸Å ¼º°ø
+        // êµ¬ë§¤ ì„±ê³µ
         dataManager.souls -= cost;
         dataManager.SetUpgradeLevel(data.upgradeType, currentLevel + 1);
         dataManager.SaveData();
 
-        Debug.Log($"[UPGRADE] Purchased {data.upgradeName} Lv.{currentLevel + 1} for {cost} souls");
+        Debug.Log($"[UPGRADE] âœ“ Purchased {data.upgradeName} Lv.{currentLevel + 1} for {cost} souls");
 
-        // UI ¾÷µ¥ÀÌÆ®
+        // UI ì—…ë°ì´íŠ¸
         UpdateAllButtons();
         UpdateSoulsDisplay();
 
-        // MVP UI ¾÷µ¥ÀÌÆ® (°ÔÀÓ ÁßÀÌ¶ó¸é)
-        //if (PlayerStats.Instance != null)
-        //{
-        //    PlayerStats.Instance.UpdateFromPersistentData();
-        //}
-         
+        // â˜…â˜…â˜… ì¶”ê°€: ê²Œì„ ì¤‘ì´ë¼ë©´ ì¦‰ì‹œ ìŠ¤íƒ¯ ì ìš© â˜…â˜…â˜…
+        if (PlayerStats.Instance != null)
+        {
+            Debug.Log("[UPGRADE] Applying upgrade to current game...");
+            PlayerStats.Instance.UpdateFromPersistentData();
+
+            // ì²´ë ¥ë„ ìµœëŒ€ì¹˜ì— ë§ì¶° ì¡°ì • (í˜„ì¬ ì²´ë ¥ ë¹„ìœ¨ ìœ ì§€)
+            float healthRatio = (float)PlayerStats.Instance.CurrentHealth / PlayerStats.Instance.MaxHealth;
+            int newCurrentHealth = Mathf.RoundToInt(PlayerStats.Instance.MaxHealth * healthRatio);
+            PlayerStats.Instance.SetHealth(newCurrentHealth, PlayerStats.Instance.MaxHealth);
+        }
+
         return true;
     }
 
@@ -126,32 +132,49 @@ public class UpgradeManager : MonoBehaviour
 
     void UpdateSoulsDisplay()
     {
-        soulsText.text = $"º¸À¯ ¿µÈ¥: {dataManager.souls}";
+        if (soulsText == null)
+        {
+            Debug.LogWarning("[UPGRADE MANAGER] soulsText is null! Please assign in Inspector.");
+            return;
+        }
+
+        if (dataManager == null)
+        {
+            soulsText.text = "ë³´ìœ  ì˜í˜¼: 0";
+            return;
+        }
+
+        soulsText.text = $"ë³´ìœ  ì˜í˜¼: {dataManager.souls}";
     }
 
     /// <summary>
-    /// ÆĞ³Î ¿­±â
+    /// íŒ¨ë„ ì—´ê¸°
     /// </summary>
     public void OpenPanel()
     {
+        if (upgradePanel == null)
+        {
+            Debug.LogError("[UPGRADE MANAGER] upgradePanel is null!");
+            return;
+        }
         upgradePanel.SetActive(true);
         UpdateAllButtons();
         UpdateSoulsDisplay();
-        Time.timeScale = 0f; // °ÔÀÓ ÀÏ½ÃÁ¤Áö
+        Time.timeScale = 0f; // ê²Œì„ ì¼ì‹œì •ì§€
     }
 
     /// <summary>
-    /// ÆĞ³Î ´İ±â
+    /// íŒ¨ë„ ë‹«ê¸°
     /// </summary>
     public void ClosePanel()
     {
         upgradePanel.SetActive(false);
-        Time.timeScale = 1f; // °ÔÀÓ Àç°³
+        Time.timeScale = 1f; // ê²Œì„ ì¬ê°œ
     }
 
     void Update()
     {
-        // UÅ°·Î °­È­ ÆĞ³Î Åä±Û (Å×½ºÆ®¿ë)
+        // Uí‚¤ë¡œ ê°•í™” íŒ¨ë„ í† ê¸€ (í…ŒìŠ¤íŠ¸ìš©)
         if (Input.GetKeyDown(KeyCode.U))
         {
             if (upgradePanel.activeSelf)

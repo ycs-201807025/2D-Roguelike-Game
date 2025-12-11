@@ -16,80 +16,43 @@ public class GameOverManager : MonoBehaviour
 
     void Start()
     {
-        // 버튼 이벤트 연결
-        if (restartButton != null)
-        {
-            restartButton.onClick.AddListener(OnRestartClicked);
-        }
+        gameOverPanel.SetActive(false);
 
-        if (mainMenuButton != null)
-        {
-            mainMenuButton.onClick.AddListener(OnMainMenuClicked);
-        }
+        restartButton.onClick.AddListener(OnRestart);
+        mainMenuButton.onClick.AddListener(OnMainMenu);
 
-        // 처음엔 숨김
-        if (gameOverPanel != null)
+        // 플레이어 사망 이벤트 구독
+        if (PlayerStats.Instance != null)
         {
-            gameOverPanel.SetActive(false);
-        }
-
-        // PlayerStats 사망 이벤트 구독
-        PlayerUIPresenter presenter = FindObjectOfType<PlayerUIPresenter>();
-        if (presenter != null)
-        {
-            PlayerStats stats = presenter.GetPlayerStats();
-            if (stats != null)
-            {
-                stats.OnPlayerDied += ShowGameOver;
-                Debug.Log("[GAMEOVER] Subscribed to player death event");
-            }
+            PlayerStats.Instance.OnPlayerDied += ShowGameOver;
         }
     }
 
-    /// <summary>
-    /// 게임오버 화면 표시
-    /// </summary>
-    public void ShowGameOver()
+    void ShowGameOver()
     {
-        Debug.Log("[GAMEOVER] Showing game over screen");
-
-        if (gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(true);
-        }
-
-        // 게임 일시정지
-        Time.timeScale = 0f;
+        Debug.Log("[GAME OVER] Showing game over screen");
+        gameOverPanel.SetActive(true);
+        Time.timeScale = 0f; // 게임 일시정지
     }
 
-    /// <summary>
-    /// 재시작 버튼 클릭
-    /// </summary>
-    private void OnRestartClicked()
+    void OnRestart()
     {
-        Debug.Log("[GAMEOVER] Restart clicked");
-
-        // 게임 재개
         Time.timeScale = 1f;
-
-        // 현재 씬 재시작
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneManager.LoadScene("GamePlay");
     }
 
-    /// <summary>
-    /// 메인메뉴 버튼 클릭
-    /// </summary>
-    private void OnMainMenuClicked()
+    void OnMainMenu()
     {
-        Debug.Log("[GAMEOVER] Main menu clicked");
-
-        // 게임 재개
         Time.timeScale = 1f;
-
-        // 메인 메뉴 씬으로 (나중에 구현)
-        // SceneManager.LoadScene("MainMenu");
-
-        // 임시: 현재 씬 재시작
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        SceneManager.LoadScene("MainMenu");
     }
+
+    void OnDestroy()
+    {
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.OnPlayerDied -= ShowGameOver;
+        }
+    }
+
 }

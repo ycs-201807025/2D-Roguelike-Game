@@ -18,6 +18,7 @@ public class PlayerHealth : MonoBehaviour
     private SpriteRenderer spriteRenderer;
     private PlayerUIPresenter uiPresenter;
     private PlayerStats playerStats;
+    private bool isInitialized = false;
 
     void Awake()
     {
@@ -26,24 +27,56 @@ public class PlayerHealth : MonoBehaviour
 
     void Start()
     {
+        StartCoroutine(InitializeWithDelay());
+    }
+
+    IEnumerator InitializeWithDelay()
+    {
+        // PlayerStats와 UIPresenter가 준비될 때까지 대기
+        int attempts = 0;
+        while (attempts < 10)
+        {
+            // PlayerStats 확인
+            if (PlayerStats.Instance != null)
+            {
+                playerStats = PlayerStats.Instance;
+                Debug.Log("[PLAYER HEALTH] PlayerStats found");
+                break;
+            }
+
+            Debug.Log($"[PLAYER HEALTH] Waiting for PlayerStats... Attempt {attempts + 1}");
+            yield return new WaitForSeconds(0.1f);
+            attempts++;
+        }
+
+        if (playerStats == null)
+        {
+            Debug.LogError("[PLAYER HEALTH] PlayerStats not found after waiting!");
+            yield break;
+        }
+
         // UI Presenter 찾기
         uiPresenter = FindObjectOfType<PlayerUIPresenter>();
 
-        if (uiPresenter != null)
+        if (uiPresenter == null)
         {
-            playerStats = uiPresenter.GetPlayerStats();
-
-            // 초기 체력 설정
-            playerStats.SetHealth(maxHealth, maxHealth);
-
-            Debug.Log("[PLAYER HEALTH] Connected to UI Presenter");
+            Debug.LogWarning("[PLAYER HEALTH] PlayerUIPresenter not found! UI will not update.");
+            // UI가 없어도 게임은 진행되도록 (PlayerStats 직접 사용)
         }
         else
         {
-            Debug.LogError("[PLAYER HEALTH] PlayerUIPresenter not found!");
+            Debug.Log("[PLAYER HEALTH] Connected to UI Presenter");
         }
-    }
 
+        // 초기 체력 설정
+        if (playerStats != null)
+        {
+            playerStats.SetHealth(playerStats.MaxHealth, playerStats.MaxHealth);
+            Debug.Log($"[PLAYER HEALTH] Initialized - HP: {playerStats.CurrentHealth}/{playerStats.MaxHealth}");
+        }
+
+        isInitialized = true;
+    }
     void Update()
     {
         // 무적 시간 감소
@@ -58,6 +91,11 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     public void TakeDamage(int damage)
     {
+        if (!isInitialized)
+        {
+            Debug.LogWarning("[PLAYER HEALTH] Not initialized yet, ignoring damage");
+            return;
+        }
         // 무적 상태면 데미지 무시
         if (invincibilityTimer > 0) return;
 
@@ -84,6 +122,12 @@ public class PlayerHealth : MonoBehaviour
     /// </summary>
     public void Heal(int amount)
     {
+        if (!isInitialized)
+        {
+            Debug.LogWarning("[PLAYER HEALTH] Not initialized yet, ignoring heal");
+            return;
+        }
+
         if (playerStats != null)
         {
             playerStats.Heal(amount);
@@ -94,7 +138,7 @@ public class PlayerHealth : MonoBehaviour
     /// <summary>
     /// 피격 이펙트
     /// </summary>
-    private System.Collections.IEnumerator HitEffect()
+    private IEnumerator HitEffect()
     {
         if (spriteRenderer != null)
         {
@@ -136,4 +180,10 @@ public class PlayerHealth : MonoBehaviour
     public int CurrentHealth => playerStats?.CurrentHealth ?? 0;
     public int MaxHealth => playerStats?.MaxHealth ?? maxHealth;
     public bool IsInvincible => invincibilityTimer > 0;
+
+    void OnDestroy()
+    {
+        // 정리
+        StopAllCoroutines();
+    }
 }
