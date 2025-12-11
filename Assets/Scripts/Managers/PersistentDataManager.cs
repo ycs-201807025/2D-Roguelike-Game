@@ -1,94 +1,134 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ¿µ±¸ µ¥ÀÌÅÍ ÀúÀå/·Îµå °ü¸®
-/// PlayerPrefs »ç¿ë
+/// ì˜êµ¬ ë°ì´í„° ê´€ë¦¬ (PlayerPrefs ì‚¬ìš©)
 /// </summary>
 public class PersistentDataManager : MonoBehaviour
 {
-    private static PersistentDataManager instance;
-    public static PersistentDataManager Instance
-    {
-        get
-        {
-            if (instance == null)
-            {
-                GameObject go = new GameObject("PersistentDataManager");
-                instance = go.AddComponent<PersistentDataManager>();
-                DontDestroyOnLoad(go);
-            }
-            return instance;
-        }
-    }
+    public static PersistentDataManager Instance { get; private set; }
 
-    // °­È­ ·¹º§ ÀúÀå¿ë
+    [Header("Debug")]
+    [SerializeField] private bool resetDataOnStart = false;
+
+    // ì¬í™”
+    public int souls = 0;
+     
+    // ì—…ê·¸ë ˆì´ë“œ ë ˆë²¨ (UpgradeTypeì„ í‚¤ë¡œ ì‚¬ìš©)
     private Dictionary<UpgradeType, int> upgradeLevels = new Dictionary<UpgradeType, int>();
 
-    // ¿µÈ¥ °³¼ö
-    private int totalSouls = 0;
+    // ì—…ê·¸ë ˆì´ë“œ ë°ì´í„° (Inspectorì—ì„œ í• ë‹¹)
+    [Header("Upgrade References")]
+    [SerializeField] private UpgradeData[] allUpgrades;
+    private Dictionary<UpgradeType, UpgradeData> upgradeDataDict = new Dictionary<UpgradeType, UpgradeData>();
 
     void Awake()
     {
-        if (instance != null && instance != this)
+        // ì‹±ê¸€í†¤ íŒ¨í„´
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+
+            // ì—…ê·¸ë ˆì´ë“œ ë°ì´í„° ë”•ì…”ë„ˆë¦¬ ì´ˆê¸°í™”
+            InitializeUpgradeData();
+
+            // ë°ì´í„° ë¡œë“œ
+            if (resetDataOnStart)
+            {
+                Debug.Log("[PERSISTENT] Resetting all data...");
+                ResetAllData();
+            }
+            else
+            {
+                LoadData();
+            }
+        }
+        else
         {
             Destroy(gameObject);
+        }
+    }
+
+    void InitializeUpgradeData()
+    {
+        upgradeDataDict.Clear();
+
+        if (allUpgrades == null || allUpgrades.Length == 0)
+        {
+            Debug.LogWarning("[PERSISTENT] No upgrade data assigned!");
             return;
         }
 
-        instance = this;
-        DontDestroyOnLoad(gameObject);
+        foreach (var upgrade in allUpgrades)
+        {
+            if (upgrade != null)
+            {
+                upgradeDataDict[upgrade.upgradeType] = upgrade;
+            }
+        }
 
-        LoadAllData();
+        Debug.Log($"[PERSISTENT] Initialized {upgradeDataDict.Count} upgrade types");
     }
 
     /// <summary>
-    /// ¸ğµç µ¥ÀÌÅÍ ·Îµå
+    /// ë°ì´í„° ë¡œë“œ
     /// </summary>
-    private void LoadAllData()
+    public void LoadData()
     {
-        Debug.Log("[PERSISTENT] Loading all data...");
+        Debug.Log("[PERSISTENT] â•â•â• Loading Data â•â•â•");
 
-        // °­È­ ·¹º§ ·Îµå
+        // ì˜í˜¼
+        souls = PlayerPrefs.GetInt("Souls", 0);
+        Debug.Log($"[PERSISTENT] Souls: {souls}");
+
+        // ì—…ê·¸ë ˆì´ë“œ ë ˆë²¨
         upgradeLevels.Clear();
         foreach (UpgradeType type in System.Enum.GetValues(typeof(UpgradeType)))
         {
-            string key = $"Upgrade_{type}";
+            string key = "Upgrade_" + type.ToString();
             int level = PlayerPrefs.GetInt(key, 0);
             upgradeLevels[type] = level;
 
-            Debug.Log($"[PERSISTENT] {type}: Level {level}");
+            if (level > 0)
+            {
+                Debug.Log($"[PERSISTENT] {type}: Level {level}");
+            }
         }
 
-        // ¿µÈ¥ ·Îµå
-        totalSouls = PlayerPrefs.GetInt("TotalSouls", 0);
-        Debug.Log($"[PERSISTENT] Total Souls: {totalSouls}");
+        Debug.Log("[PERSISTENT] â•â•â• Load Complete â•â•â•");
     }
 
     /// <summary>
-    /// ¸ğµç µ¥ÀÌÅÍ ÀúÀå
+    /// ë°ì´í„° ì €ì¥
     /// </summary>
-    public void SaveAllData()
+    public void SaveData()
     {
-        Debug.Log("[PERSISTENT] Saving all data...");
+        Debug.Log("[PERSISTENT] â•â•â• Saving Data â•â•â•");
 
-        // °­È­ ·¹º§ ÀúÀå
+        // ì˜í˜¼ ì €ì¥
+        PlayerPrefs.SetInt("Souls", souls);
+        Debug.Log($"[PERSISTENT] Saved Souls: {souls}");
+
+        // ì—…ê·¸ë ˆì´ë“œ ë ˆë²¨ ì €ì¥
         foreach (var kvp in upgradeLevels)
         {
-            string key = $"Upgrade_{kvp.Key}";
+            string key = "Upgrade_" + kvp.Key.ToString();
             PlayerPrefs.SetInt(key, kvp.Value);
+
+            if (kvp.Value > 0)
+            {
+                Debug.Log($"[PERSISTENT] Saved {kvp.Key}: Level {kvp.Value}");
+            }
         }
 
-        // ¿µÈ¥ ÀúÀå
-        PlayerPrefs.SetInt("TotalSouls", totalSouls);
-
         PlayerPrefs.Save();
-        Debug.Log("[PERSISTENT] Data saved!");
+        Debug.Log("[PERSISTENT] â•â•â• Save Complete â•â•â•");
     }
 
     /// <summary>
-    /// °­È­ ·¹º§ °¡Á®¿À±â
+    /// íŠ¹ì • ì—…ê·¸ë ˆì´ë“œì˜ í˜„ì¬ ë ˆë²¨
     /// </summary>
     public int GetUpgradeLevel(UpgradeType type)
     {
@@ -100,82 +140,85 @@ public class PersistentDataManager : MonoBehaviour
     }
 
     /// <summary>
-    /// °­È­ ·¹º§ ¼³Á¤
+    /// ì—…ê·¸ë ˆì´ë“œ ë ˆë²¨ ì„¤ì •
     /// </summary>
     public void SetUpgradeLevel(UpgradeType type, int level)
     {
         upgradeLevels[type] = level;
-        SaveAllData();
-
-        Debug.Log($"[PERSISTENT] {type} upgraded to level {level}");
+        Debug.Log($"[PERSISTENT] Set {type} to level {level}");
     }
 
     /// <summary>
-    /// ¿µÈ¥ °¡Á®¿À±â
+    /// íŠ¹ì • ì—…ê·¸ë ˆì´ë“œì˜ ì´ ì¦ê°€ê°’
     /// </summary>
-    public int GetSouls()
+    public int GetTotalUpgradeValue(UpgradeType type)
     {
-        return totalSouls;
-    }
-
-    /// <summary>
-    /// ¿µÈ¥ Ãß°¡
-    /// </summary>
-    public void AddSouls(int amount)
-    {
-        totalSouls += amount;
-        SaveAllData();
-
-        Debug.Log($"[PERSISTENT] Added {amount} souls. Total: {totalSouls}");
-    }
-
-    /// <summary>
-    /// ¿µÈ¥ ¼Òºñ
-    /// </summary>
-    public bool SpendSouls(int amount)
-    {
-        if (totalSouls >= amount)
+        if (!upgradeDataDict.ContainsKey(type))
         {
-            totalSouls -= amount;
-            SaveAllData();
-
-            Debug.Log($"[PERSISTENT] Spent {amount} souls. Remaining: {totalSouls}");
-            return true;
+            Debug.LogWarning($"[PERSISTENT] No upgrade data for {type}");
+            return 0;
         }
 
-        Debug.LogWarning($"[PERSISTENT] Not enough souls! Have: {totalSouls}, Need: {amount}");
-        return false;
+        int currentLevel = GetUpgradeLevel(type);
+        return upgradeDataDict[type].GetTotalValue(currentLevel);
     }
 
     /// <summary>
-    /// ¸ğµç µ¥ÀÌÅÍ ÃÊ±âÈ­ (Å×½ºÆ®¿ë)
+    /// ì—…ê·¸ë ˆì´ë“œ ë°ì´í„° ê°€ì ¸ì˜¤ê¸°
+    /// </summary>
+    public UpgradeData GetUpgradeData(UpgradeType type)
+    {
+        if (upgradeDataDict.ContainsKey(type))
+        {
+            return upgradeDataDict[type];
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// ëª¨ë“  ë°ì´í„° ì´ˆê¸°í™”
     /// </summary>
     public void ResetAllData()
     {
-        Debug.Log("[PERSISTENT] Resetting all data!");
+        Debug.Log("[PERSISTENT] â•â•â• RESETTING ALL DATA â•â•â•");
+
+        souls = 0;
+        upgradeLevels.Clear();
 
         PlayerPrefs.DeleteAll();
-        upgradeLevels.Clear();
-        totalSouls = 0;
+        PlayerPrefs.Save();
 
-        LoadAllData();
+        Debug.Log("[PERSISTENT] All data has been reset");
     }
 
     /// <summary>
-    /// Æ¯Á¤ °­È­ÀÇ ÃÑ È¿°ú°ª °è»ê
+    /// ë””ë²„ê·¸ìš©: ì˜í˜¼ ì¶”ê°€
     /// </summary>
-    public int GetTotalUpgradeValue(UpgradeData upgradeData)
+    [ContextMenu("Add 1000 Souls")]
+    public void AddSoulsDebug()
     {
-        if (upgradeData == null) return 0;
+        souls += 1000;
+        SaveData();
+        Debug.Log($"[DEBUG] Added 1000 souls. Total: {souls}");
+    }
 
-        int level = GetUpgradeLevel(upgradeData.upgradeType);
-        int totalValue = 0;
+    /// <summary>
+    /// ë””ë²„ê·¸ìš©: ë°ì´í„° ì¶œë ¥
+    /// </summary>
+    [ContextMenu("Print All Data")]
+    public void PrintAllData()
+    {
+        Debug.Log("â•â•â• PERSISTENT DATA â•â•â•");
+        Debug.Log($"Souls: {souls}");
 
-        for (int i = 0; i < level; i++)
+        foreach (var kvp in upgradeLevels)
         {
-            totalValue += upgradeData.GetValueForLevel(i);
+            if (kvp.Value > 0)
+            {
+                int totalValue = GetTotalUpgradeValue(kvp.Key);
+                Debug.Log($"{kvp.Key}: Level {kvp.Value} (Total: +{totalValue})");
+            }
         }
-
-        return totalValue;
     }
 }
+

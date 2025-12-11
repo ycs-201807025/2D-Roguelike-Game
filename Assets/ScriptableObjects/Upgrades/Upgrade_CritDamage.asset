@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   upgradeName: "\uCE58\uBA85\uD0C0 \uD53C\uD574"
   upgradeType: 4
-  description: "\uCE58\uBA85\uD0C0 \uD53C\uD574 \uC99D\uAC00 \uC5C5\uADF8\uB808\uC774\uB4DC"
-  icon: {fileID: 0}
+  description: "\uCE58\uBA85\uD0C0 \uACF5\uACA9\uC758 \uD53C\uD574\uB7C9\uC744 \uC99D\uAC00\uC2DC\uD0B5\uB2C8\uB2E4"
   maxLevel: 5
   costs: 3c00000078000000f0000000e0010000c0030000
   values: 1400000014000000140000001400000014000000

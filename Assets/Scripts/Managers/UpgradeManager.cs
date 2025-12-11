@@ -104,11 +104,11 @@ public class UpgradeManager : MonoBehaviour
         UpdateSoulsDisplay();
 
         // MVP UI 업데이트 (게임 중이라면)
-        if (PlayerStats.Instance != null)
-        {
-            PlayerStats.Instance.UpdateFromPersistentData();
-        }
-
+        //if (PlayerStats.Instance != null)
+        //{
+        //    PlayerStats.Instance.UpdateFromPersistentData();
+        //}
+         
         return true;
     }
 
@@ -164,4 +164,4 @@ public class UpgradeManager : MonoBehaviour
             }
         }
     }
-}}
+}

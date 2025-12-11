@@ -1,139 +1,183 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 
 /// <summary>
-/// °³º° °­È­ ¹öÆ° UI
+/// ì—…ê·¸ë ˆì´ë“œ ë²„íŠ¼ UI
 /// </summary>
 public class UpgradeButton : MonoBehaviour
 {
-    [Header("Data")]
-    [SerializeField] private UpgradeData upgradeData;
-     
-    [Header("UI Elements")]
+    [Header("UI References")]
     [SerializeField] private TextMeshProUGUI nameText;
+    [SerializeField] private TextMeshProUGUI descriptionText;
     [SerializeField] private TextMeshProUGUI levelText;
     [SerializeField] private TextMeshProUGUI costText;
-    [SerializeField] private TextMeshProUGUI effectText;
     [SerializeField] private Button button;
 
-    private int currentLevel = 0;
+    [Header("Colors")]
+    [SerializeField] private Color affordableColor = new Color(0.4f, 0.8f, 0.4f); // êµ¬ë§¤ ê°€ëŠ¥ (ë…¹ìƒ‰)
+    [SerializeField] private Color notAffordableColor = new Color(0.5f, 0.5f, 0.5f); // êµ¬ë§¤ ë¶ˆê°€ (íšŒìƒ‰)
+    [SerializeField] private Color maxLevelColor = new Color(1f, 0.84f, 0f); // ìµœëŒ€ ë ˆë²¨ (ê¸ˆìƒ‰)
 
-    void Start()
+    private UpgradeData upgradeData;
+    private UpgradeManager upgradeManager;
+
+    void Awake()
     {
-        if (button != null)
+        // Button ì»´í¬ë„ŒíŠ¸ ìë™ í• ë‹¹
+        if (button == null)
         {
-            button.onClick.AddListener(OnButtonClicked);
+            button = GetComponent<Button>();
         }
 
-        UpdateUI();
+        // ë²„íŠ¼ í´ë¦­ ì´ë²¤íŠ¸
+        if (button != null)
+        {
+            button.onClick.AddListener(OnButtonClick);
+        }
     }
 
     /// <summary>
-    /// UI ¾÷µ¥ÀÌÆ®
+    /// ì´ˆê¸°í™”
     /// </summary>
-    public void UpdateUI()
+    public void Initialize(UpgradeData data, UpgradeManager manager)
     {
-        if (upgradeData == null) return;
+        upgradeData = data;
+        upgradeManager = manager;
 
-        // ÇöÀç ·¹º§ °¡Á®¿À±â
-        currentLevel = PersistentDataManager.Instance.GetUpgradeLevel(upgradeData.upgradeType);
+        if (upgradeData == null)
+        {
+            Debug.LogError("[UPGRADE BUTTON] UpgradeData is null!");
+            return;
+        }
 
-        // ÀÌ¸§
+        // ê¸°ë³¸ ì •ë³´ ì„¤ì • (ë³€í•˜ì§€ ì•ŠëŠ” ê²ƒë“¤)
         if (nameText != null)
         {
             nameText.text = upgradeData.upgradeName;
         }
 
-        // ·¹º§
+        if (descriptionText != null)
+        {
+            descriptionText.text = upgradeData.description;
+        }
+
+        // ë™ì  ì •ë³´ ì—…ë°ì´íŠ¸
+        UpdateDisplay();
+
+        Debug.Log($"[UPGRADE BUTTON] Initialized: {upgradeData.upgradeName}");
+    }
+
+    /// <summary>
+    /// í‘œì‹œ ì—…ë°ì´íŠ¸ (ë ˆë²¨, ë¹„ìš©, ìƒ‰ìƒ)
+    /// </summary>
+    public void UpdateDisplay()
+    {
+        if (upgradeData == null)
+        {
+            Debug.LogWarning("[UPGRADE BUTTON] Cannot update - no upgrade data");
+            return;
+        }
+
+        // í˜„ì¬ ë ˆë²¨ ê°€ì ¸ì˜¤ê¸°
+        int currentLevel = 0;
+        int currentSouls = 0;
+
+        if (PersistentDataManager.Instance != null)
+        {
+            currentLevel = PersistentDataManager.Instance.GetUpgradeLevel(upgradeData.upgradeType);
+            currentSouls = PersistentDataManager.Instance.souls;
+        }
+
+        // ë ˆë²¨ í…ìŠ¤íŠ¸
         if (levelText != null)
         {
             levelText.text = $"Lv. {currentLevel} / {upgradeData.maxLevel}";
         }
 
-        // ÃÖ´ë ·¹º§ÀÌ¸é
-        if (currentLevel >= upgradeData.maxLevel)
+        // ìµœëŒ€ ë ˆë²¨ ì²´í¬
+        bool isMaxLevel = currentLevel >= upgradeData.maxLevel;
+
+        if (isMaxLevel)
         {
-            if (costText != null) costText.text = "MAX";
-            if (effectText != null) effectText.text = "ÃÖ´ë ·¹º§";
-            if (button != null) button.interactable = false;
+            // ìµœëŒ€ ë ˆë²¨ ë„ë‹¬
+            if (costText != null)
+            {
+                costText.text = "MAX";
+                costText.color = maxLevelColor;
+            }
+
+            if (button != null)
+            {
+                button.interactable = false;
+                button.GetComponent<Image>().color = maxLevelColor;
+            }
+        }
+        else
+        {
+            // ì•„ì§ ì—…ê·¸ë ˆì´ë“œ ê°€ëŠ¥
+            int nextLevelCost = upgradeData.GetCost(currentLevel);
+
+            if (costText != null)
+            {
+                costText.text = $"{nextLevelCost} ì˜í˜¼";
+            }
+
+            // êµ¬ë§¤ ê°€ëŠ¥ ì—¬ë¶€ì— ë”°ë¼ ìƒ‰ìƒ ë³€ê²½
+            bool canAfford = currentSouls >= nextLevelCost;
+
+            if (button != null)
+            {
+                button.interactable = canAfford;
+
+                Image buttonImage = button.GetComponent<Image>();
+                if (buttonImage != null)
+                {
+                    buttonImage.color = canAfford ? affordableColor : notAffordableColor;
+                }
+            }
+
+            if (costText != null)
+            {
+                costText.color = canAfford ? affordableColor : notAffordableColor;
+            }
+        }
+    }
+
+    /// <summary>
+    /// ë²„íŠ¼ í´ë¦­ ì‹œ
+    /// </summary>
+    void OnButtonClick()
+    {
+        if (upgradeData == null || upgradeManager == null)
+        {
+            Debug.LogError("[UPGRADE BUTTON] Cannot purchase - missing references");
             return;
         }
 
-        // ºñ¿ë
-        int cost = upgradeData.GetCostForLevel(currentLevel);
-        if (costText != null)
-        {
-            costText.text = $"ºñ¿ë: {cost} ¿µÈ¥";
-        }
+        Debug.Log($"[UPGRADE BUTTON] Attempting to purchase: {upgradeData.upgradeName}");
 
-        // È¿°ú
-        int value = upgradeData.GetValueForLevel(currentLevel);
-        if (effectText != null)
-        {
-            effectText.text = $"+{value} {GetEffectSuffix()}";
-        }
+        // êµ¬ë§¤ ì‹œë„
+        bool success = upgradeManager.TryPurchaseUpgrade(upgradeData);
 
-        // ¹öÆ° È°¼ºÈ­ ¿©ºÎ (¿µÈ¥ ºÎÁ·ÇÏ¸é ºñÈ°¼º)
+        if (success)
+        {
+            Debug.Log($"[UPGRADE BUTTON] âœ“ Purchase successful!");
+        }
+        else
+        {
+            Debug.Log($"[UPGRADE BUTTON] âœ— Purchase failed");
+        }
+    }
+
+    void OnDestroy()
+    {
+        // ë²„íŠ¼ ì´ë²¤íŠ¸ ì œê±°
         if (button != null)
         {
-            int souls = PersistentDataManager.Instance.GetSouls();
-            button.interactable = souls >= cost;
+            button.onClick.RemoveListener(OnButtonClick);
         }
     }
-
-    /// <summary>
-    /// È¿°ú Á¢¹Ì»ç
-    /// </summary>
-    private string GetEffectSuffix()
-    {
-        switch (upgradeData.upgradeType)
-        {
-            case UpgradeType.MaxHealth: return "Ã¼·Â";
-            case UpgradeType.AttackDamage: return "°ø°İ·Â";
-            case UpgradeType.MoveSpeed: return "¼Óµµ";
-            case UpgradeType.CritChance: return "%";
-            case UpgradeType.CritDamage: return "%";
-            case UpgradeType.StartGold: return "°ñµå";
-            default: return "";
-        }
-    }
-
-    /// <summary>
-    /// ¹öÆ° Å¬¸¯
-    /// </summary>
-    private void OnButtonClicked()
-    {
-        if (upgradeData == null) return;
-        if (currentLevel >= upgradeData.maxLevel) return;
-
-        int cost = upgradeData.GetCostForLevel(currentLevel);
-
-        // ¿µÈ¥ ¼Òºñ
-        if (PersistentDataManager.Instance.SpendSouls(cost))
-        {
-            // ·¹º§ ¾÷
-            PersistentDataManager.Instance.SetUpgradeLevel(
-                upgradeData.upgradeType,
-                currentLevel + 1
-            );
-
-            Debug.Log($"[UPGRADE] {upgradeData.upgradeName} upgraded to level {currentLevel + 1}");
-
-            // UI ¾÷µ¥ÀÌÆ®
-            UpdateUI();
-
-            // ´Ù¸¥ ¹öÆ°µéµµ ¾÷µ¥ÀÌÆ® (¿µÈ¥ °³¼ö º¯°æµÊ)
-            //UpgradeMenuManager manager = FindObjectOfType<UpgradeMenuManager>();
-            //if (manager != null)
-            //{
-            //    manager.UpdateAllButtons();
-            //}
-        }
-    }
-
-    // Public API
-    public UpgradeData UpgradeData => upgradeData;
 }
