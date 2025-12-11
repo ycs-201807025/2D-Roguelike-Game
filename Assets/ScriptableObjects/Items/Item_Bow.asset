@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8de9ac6bbfd5b9247ab6f1ffffc910b1, type: 3}
+  m_Name: Item_Bow
+  m_EditorClassIdentifier: 
+  itemName: "\uD65C"
+  itemType: 0
+  description: "\uC6D0\uAC70\uB9AC \uACF5\uACA9\uC774 \uAC00\uB2A5\uD55C \uD65C\uC785\uB2C8\uB2E4"
+  icon: {fileID: 21300000, guid: c1250b69570221641bf4d9d54e44301e, type: 3}
+  weaponData: {fileID: 11400000, guid: ec69cc8c749365444b48ba04dde044a7, type: 2}
+  effectType: 0
+  effectValue: 0
+  dropChance: 0.5

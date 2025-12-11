@@ -186,4 +186,42 @@ public class PlayerStats : MonoBehaviour
         }
         return false;
     }
+    /// <summary>
+    /// 최대 체력 증가 (아이템)
+    /// </summary>
+    public void AddMaxHealth(int amount)
+    {
+        maxHealth += amount;
+        currentHealth += amount; // 현재 체력도 같이 증가
+        OnHealthChanged?.Invoke(currentHealth, maxHealth);
+
+        Debug.Log($"[STATS] Max Health increased by {amount} → {maxHealth}");
+    }
+
+    /// <summary>
+    /// 공격력 증가 (아이템)
+    /// </summary>
+    public void AddAttackDamage(int amount)
+    {
+        attackDamage += amount;
+        Debug.Log($"[STATS] Attack Damage increased by {amount} → {attackDamage}");
+    }
+
+    /// <summary>
+    /// 이동 속도 증가 (아이템)
+    /// </summary>
+    public void AddMoveSpeed(float amount)
+    {
+        moveSpeed += amount;
+        Debug.Log($"[STATS] Move Speed increased by {amount} → {moveSpeed}");
+    }
+
+    /// <summary>
+    /// 치명타 확률 증가 (아이템)
+    /// </summary>
+    public void AddCritChance(float amount)
+    {
+        critChance += amount;
+        Debug.Log($"[STATS] Crit Chance increased by {amount}% → {critChance}%");
+    }
 }
