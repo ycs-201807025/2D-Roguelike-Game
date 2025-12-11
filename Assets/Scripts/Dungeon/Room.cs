@@ -29,6 +29,11 @@ public class Room : MonoBehaviour
     private bool isActive = false;
     private List<GameObject> spawnedEnemies = new List<GameObject>();
 
+    [Header("Item Drop")]
+    [SerializeField] private GameObject itemDropPrefab;
+    [SerializeField] private ItemData[] possibleItems; // 드롭 가능한 아이템들
+    [SerializeField] private float itemDropChance = 0.5f; // 50% 확률
+
     // 이벤트
     public System.Action OnRoomCleared;
 
@@ -173,16 +178,26 @@ public class Room : MonoBehaviour
     /// </summary>
     private void ClearRoom()
     {
+        if (isCleared) return;
+
         isCleared = true;
+
+        Debug.Log($"[ROOM] ✓ Room Cleared: {roomData.roomName}");
+
+        // 문 열기
         OpenDoors();
-        ActivatePortals(); // 포탈 활성화
 
-        Debug.Log($"★ Room Cleared: {roomData.roomName} ★");
+        // 포탈 활성화
+        ActivatePortals();
 
-        // 보상 지급
-        GiveRewards();
+        // 골드 보상
+        if (PlayerStats.Instance != null)
+        {
+            PlayerStats.Instance.AddGold(roomData.goldReward);
+        }
 
-        OnRoomCleared?.Invoke();
+        // ★★★ 아이템 드롭 추가 ★★★
+        DropRandomItem();
     }
     /// <summary>
     /// 보상 지급
@@ -279,4 +294,78 @@ public class Room : MonoBehaviour
     public RoomData RoomData => roomData;
     public bool IsCleared => isCleared;
     public bool IsActive => isActive;
+
+    /// <summary>
+    /// 방 클리어 시 아이템 드롭
+    /// </summary>
+    void DropRandomItem()
+    {
+        // 확률 체크
+        if (Random.value > itemDropChance)
+        {
+            Debug.Log("[ROOM] No item dropped");
+            return;
+        }
+
+        if (possibleItems == null || possibleItems.Length == 0)
+        {
+            Debug.LogWarning("[ROOM] No possible items configured");
+            return;
+        }
+
+        if (itemDropPrefab == null)
+        {
+            Debug.LogError("[ROOM] Item drop prefab not assigned");
+            return;
+        }
+
+        // 랜덤 아이템 선택 (가중치 고려)
+        ItemData selectedItem = SelectRandomItem();
+
+        if (selectedItem == null) return;
+
+        // 아이템 드롭
+        Vector3 dropPosition = transform.position; // 방 중앙
+        GameObject itemObj = Instantiate(itemDropPrefab, dropPosition, Quaternion.identity);
+
+        ItemDrop drop = itemObj.GetComponent<ItemDrop>();
+        if (drop != null)
+        {
+            drop.Initialize(selectedItem);
+        }
+
+        Debug.Log($"[ROOM] Dropped item: {selectedItem.itemName}");
+    }
+
+    /// <summary>
+    /// 가중치를 고려한 랜덤 아이템 선택
+    /// </summary>
+    ItemData SelectRandomItem()
+    {
+        float totalWeight = 0f;
+        foreach (var item in possibleItems)
+        {
+            if (item != null)
+            {
+                totalWeight += item.dropChance;
+            }
+        }
+
+        float randomValue = Random.Range(0f, totalWeight);
+        float currentWeight = 0f;
+
+        foreach (var item in possibleItems)
+        {
+            if (item != null)
+            {
+                currentWeight += item.dropChance;
+                if (randomValue <= currentWeight)
+                {
+                    return item;
+                }
+            }
+        }
+
+        return possibleItems[0]; // 폴백
+    }
 }

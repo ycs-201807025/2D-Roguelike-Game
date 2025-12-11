@@ -3587,6 +3587,18 @@ MonoBehaviour:
   westDoor: {fileID: 2911180209726624976}
   nextPortal: {fileID: 5379206508504589658}
   previousPortal: {fileID: 1431526184349728494}
+  itemDropPrefab: {fileID: 9080134594651889597, guid: d49f6438df7cf2d4ca76f7361250aef9, type: 3}
+  possibleItems:
+  - {fileID: 11400000, guid: 86bc9b0f9fd98244eb57aecc95dd3709, type: 2}
+  - {fileID: 11400000, guid: 6de365175bd5edc42a2eaf708198853f, type: 2}
+  - {fileID: 11400000, guid: eb2caf5060ce6434e80855bf1458f0dc, type: 2}
+  - {fileID: 11400000, guid: 4ff28322183bb9444b7fa1005a2d7379, type: 2}
+  - {fileID: 11400000, guid: beac0a3310d79dc4e99e2c586c1c001b, type: 2}
+  - {fileID: 11400000, guid: a5d7d323197c55b47b86921c67d6a341, type: 2}
+  - {fileID: 11400000, guid: 08f7639d7214d584f9c946a5f938a64b, type: 2}
+  - {fileID: 11400000, guid: 427ee535c72b2b645b8840d6aab81f1a, type: 2}
+  - {fileID: 11400000, guid: 5e2e4dba753f6784894406be60b273a0, type: 2}
+  itemDropChance: 0.5
 --- !u!1 &8064650632713747190
 GameObject:
   m_ObjectHideFlags: 0
