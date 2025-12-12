@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 441807037876cf746b661664f4fc9cc5, type: 3}
+  m_Name: Event_Shrine
+  m_EditorClassIdentifier: 
+  eventTitle: "\uC2E0\uBE44\uD55C \uC81C\uB2E8"
+  eventDescription: "\uC624\uB798\uB41C \uC81C\uB2E8\uC774 \uBE5B\uB098\uACE0 \uC788\uC2B5\uB2C8\uB2E4.\\n\uC81C\uBB3C\uC744
+    \uBC14\uCE58\uBA74 \uCD95\uBCF5\uC744 \uBC1B\uC744 \uC218 \uC788\uC744 \uAC83
+    \uAC19\uC2B5\uB2C8\uB2E4."
+  options:
+  - optionText: "\uCCB4\uB825 30\uC744 \uBC14\uCE5C\uB2E4"
+    goldCost: 0
+    healthCost: 30
+    rewardItem: {fileID: 11400000, guid: beac0a3310d79dc4e99e2c586c1c001b, type: 2}
+  - optionText: "\uACE8\uB4DC 100\uC744 \uBC14\uCE5C\uB2E4"
+    goldCost: 100
+    healthCost: 0
+    rewardItem: {fileID: 11400000, guid: 4ff28322183bb9444b7fa1005a2d7379, type: 2}

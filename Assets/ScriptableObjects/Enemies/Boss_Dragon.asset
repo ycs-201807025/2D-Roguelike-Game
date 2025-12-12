@@ -10,15 +10,15 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 4d824bc66e4080a419b59f45bbf259a2, type: 3}
-  m_Name: Archer
+  m_Name: Boss_Dragon
   m_EditorClassIdentifier: 
-  enemyName: Archer
+  enemyName: "\uB4DC\uB798\uACE4"
   sprite: {fileID: 0}
-  maxHealth: 20
-  damage: 8
-  moveSpeed: 1.5
-  detectionRange: 8
-  attackRange: 7
-  attackCooldown: 2
-  goldDrop: 5
-  soulDrop: 2
+  maxHealth: 300
+  damage: 15
+  moveSpeed: 2
+  detectionRange: 10
+  attackRange: 2
+  attackCooldown: 1.5
+  goldDrop: 200
+  soulDrop: 100

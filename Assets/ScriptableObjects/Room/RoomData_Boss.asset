@@ -10,18 +10,18 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd33391c94893e84aaf76299feb49911, type: 3}
-  m_Name: Room_Combat_01
+  m_Name: RoomData_Boss
   m_EditorClassIdentifier: 
-  roomName: Combat Room 1
-  roomType: 0
-  roomSize: {x: 20, y: 15}
+  roomName: Boss Arena
+  roomType: 2
+  roomSize: {x: 30, y: 25}
   hasEnemies: 1
-  minEnemies: 3
-  maxEnemies: 5
+  minEnemies: 1
+  maxEnemies: 1
   enemyPrefabs:
-  - {fileID: 109201163473874453, guid: d3b8c23d8009f2a41871db35867d5057, type: 3}
-  goldReward: 25
-  hasChest: 0
+  - {fileID: 7584832464297758385, guid: 5ba02c54c11488d47a0e1468b8738e52, type: 3}
+  goldReward: 0
+  hasChest: 1
   hasNorthDoor: 0
   hasSouthDoor: 0
   hasEastDoor: 1

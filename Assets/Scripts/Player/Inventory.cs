@@ -76,7 +76,7 @@ public class Inventory : MonoBehaviour
 
         if (playerWeapon != null)
         {
-            //playerWeapon.EquipWeapon(item.weaponData);
+            playerWeapon.EquipWeapon(item.weaponData);
             Debug.Log($"[INVENTORY] Equipped weapon: {item.itemName}");
         }
     }

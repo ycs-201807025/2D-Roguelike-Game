@@ -10,26 +10,30 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     [Header("Data")]
-    [SerializeField] private EnemyData data;
+    [SerializeField] public EnemyData data;
 
     [Header("References")]
-    private Rigidbody2D rb;
-    private Transform player;
-    private SpriteRenderer spriteRenderer;
+    public Rigidbody2D rb;
+    public Transform player;
+    public SpriteRenderer spriteRenderer;
 
     //상태
-    private int currentHealth;
-    private float attackCooldown;
+    protected int health;
+    protected float attackCooldown;
 
-    private void Awake()
+    // 접근자 (외부에서 체력 확인용)
+    public int CurrentHealth => health;
+    public int MaxHealth => data != null ? data.maxHealth : 0;
+
+    protected virtual void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
-        spriteRenderer = GetComponent<SpriteRenderer>();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
 
         //초기 설정
         if (data != null)
         {
-            currentHealth = data.maxHealth;
+            health = data.maxHealth;
             if(spriteRenderer != null && data.sprite != null)
             {
                 spriteRenderer.sprite = data.sprite;
@@ -37,13 +41,18 @@ public class Enemy : MonoBehaviour
         }
     }
 
-    void Start()
+    protected virtual void Start()
     {
         //플레이어 찾기
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
+
+        if (player == null)
+        {
+            Debug.LogWarning($"[ENEMY] {data?.enemyName} - Player not found!");
+        }
     }
 
-    void Update()
+    protected virtual void Update()
     {
         if (player == null) return;
 
@@ -76,7 +85,7 @@ public class Enemy : MonoBehaviour
     /// <summary>
     /// 플레이어 추격
     /// </summary>
-    private void ChasePlayer()
+    protected virtual void ChasePlayer()
     {
         Vector2 direction = (player.position - transform.position).normalized;
         rb.velocity = direction * data.moveSpeed;
@@ -85,7 +94,7 @@ public class Enemy : MonoBehaviour
     /// <summary>
     /// 공격
     /// </summary>
-    private void Attack()
+    protected virtual void Attack()
     {
         //정지
         rb.velocity = Vector2.zero;
@@ -107,15 +116,15 @@ public class Enemy : MonoBehaviour
     /// <summary>
     /// 피격
     /// </summary>
-    public void TakeDamage(int damage)
+    public virtual void TakeDamage(int damage)
     {
-        currentHealth -= damage;
-        Debug.Log($"{data.enemyName} 체력 : {currentHealth}/{data.maxHealth}");
+        health -= damage;
+        Debug.Log($"{data.enemyName} 체력 : {health}/{data.maxHealth}");
 
         //피격 이펙트
         StartCoroutine(HitEffect());
 
-        if(currentHealth <= 0)
+        if(health <= 0)
         {
             Die();
         }
@@ -124,7 +133,7 @@ public class Enemy : MonoBehaviour
     /// <summary>
     /// 피격 이펙트
     /// </summary>
-    private IEnumerator HitEffect()
+    protected virtual IEnumerator HitEffect()
     {
         if (spriteRenderer != null)
         {
@@ -137,32 +146,24 @@ public class Enemy : MonoBehaviour
     /// <summary>
     /// 사망
     /// </summary>
-    private void Die()
+    protected virtual void Die()
     {
         Debug.Log($"{data.enemyName} 사망");
 
         // 골드 드롭
-        PlayerUIPresenter presenter = FindObjectOfType<PlayerUIPresenter>();
-        if (presenter != null && data != null)
+        if (PlayerStats.Instance != null && data != null)
         {
-            PlayerStats stats = presenter.GetPlayerStats();
-            if (stats != null)
-            {
-                stats.AddGold(data.goldDrop);
-                Debug.Log($"[ENEMY] Dropped {data.goldDrop} gold");
-            }
+            PlayerStats.Instance.AddGold(data.goldDrop);
+            Debug.Log($"[ENEMY] Dropped {data.goldDrop} gold");
         }
-        //재화 드랍
-        //DropRewards();
 
-        //사망이펙트
 
         //오브젝트 제거
         Destroy(gameObject);
     }
 
     //디버그
-    private void OnDrawGizmosSelected()
+    protected virtual void OnDrawGizmosSelected()
     {
         if (data == null) return;
         

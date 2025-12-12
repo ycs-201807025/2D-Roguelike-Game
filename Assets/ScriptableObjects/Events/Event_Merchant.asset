@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 441807037876cf746b661664f4fc9cc5, type: 3}
+  m_Name: Event_Merchant
+  m_EditorClassIdentifier: 
+  eventTitle: "\uB5A0\uB3CC\uC774 \uC0C1\uC778"
+  eventDescription: "\uC218\uC0C1\uD55C \uC0C1\uC778\uC774 \uB2F9\uC2E0\uC744 \uBD80\uB985\uB2C8\uB2E4.\\n'\uD2B9\uBCC4\uD55C
+    \uBB3C\uAC74\uC774 \uC788\uB294\uB370... \uAD00\uC2EC \uC788\uC18C?"
+  options:
+  - optionText: "\uBB34\uAE30 \uAD6C\uB9E4 (80 \uACE8\uB4DC)"
+    goldCost: 80
+    healthCost: 0
+    rewardItem: {fileID: 11400000, guid: eb2caf5060ce6434e80855bf1458f0dc, type: 2}
+  - optionText: "\uC544\uC774\uD15C \uAD6C\uB9E4 (60 \uACE8\uB4DC)"
+    goldCost: 60
+    healthCost: 0
+    rewardItem: {fileID: 11400000, guid: a5d7d323197c55b47b86921c67d6a341, type: 2}
+  - optionText: "\uAC70\uC808\uD55C\uB2E4"
+    goldCost: 0
+    healthCost: 0
+    rewardItem: {fileID: 0}

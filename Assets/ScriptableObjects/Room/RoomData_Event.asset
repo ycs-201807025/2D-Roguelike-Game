@@ -10,17 +10,16 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: bd33391c94893e84aaf76299feb49911, type: 3}
-  m_Name: Room_Combat_01
+  m_Name: RoomData_Event
   m_EditorClassIdentifier: 
-  roomName: Combat Room 1
-  roomType: 0
-  roomSize: {x: 20, y: 15}
-  hasEnemies: 1
-  minEnemies: 3
-  maxEnemies: 5
-  enemyPrefabs:
-  - {fileID: 109201163473874453, guid: d3b8c23d8009f2a41871db35867d5057, type: 3}
-  goldReward: 25
+  roomName: Event Room
+  roomType: 3
+  roomSize: {x: 15, y: 12}
+  hasEnemies: 0
+  minEnemies: 0
+  maxEnemies: 0
+  enemyPrefabs: []
+  goldReward: 0
   hasChest: 0
   hasNorthDoor: 0
   hasSouthDoor: 0

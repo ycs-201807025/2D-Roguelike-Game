@@ -139,7 +139,22 @@ public class PlayerWeapon : MonoBehaviour
         attackCooldown = 0;
         Debug.Log($"무기 변경: {newWeapon.weaponName}");
     }
+    /// <summary>
+    /// 무기 장착 (Inventory에서 사용) ★★★ 추가! ★★★
+    /// </summary>
+    public void EquipWeapon(WeaponData newWeapon)
+    {
+        if (newWeapon == null)
+        {
+            Debug.LogWarning("[PLAYER WEAPON] Cannot equip null weapon");
+            return;
+        }
 
+        currentWeapon = newWeapon;
+        attackCooldown = 0;
+
+        Debug.Log($"[PLAYER WEAPON] Equipped: {newWeapon.weaponName}");
+    }
     //디버그
     void OnDrawGizmosSelected()
     {

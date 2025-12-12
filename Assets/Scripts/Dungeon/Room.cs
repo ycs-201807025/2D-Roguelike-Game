@@ -34,6 +34,9 @@ public class Room : MonoBehaviour
     [SerializeField] private ItemData[] possibleItems; // 드롭 가능한 아이템들
     [SerializeField] private float itemDropChance = 0.5f; // 50% 확률
 
+    [Header("Random Event")]
+    [SerializeField] private bool isEventRoom = false;
+
     // 이벤트
     public System.Action OnRoomCleared;
 
@@ -71,38 +74,46 @@ public class Room : MonoBehaviour
             return;
         }
 
-        Debug.Log($"[ROOM] Room Name: {roomData.roomName}");
-        Debug.Log($"[ROOM] Has Enemies: {roomData.hasEnemies}");
-        Debug.Log($"[ROOM] Is Cleared: {isCleared}");
-
-        // 적이 없는 방은 바로 클리어 상태로
-        if (!roomData.hasEnemies)
+        // 사건방인 경우
+        if (isEventRoom)
         {
-            Debug.Log($"[ROOM] → No enemies, auto-clearing...");
+            Debug.Log($"[ROOM] Event room: {roomData.roomName}");
+
+            // 랜덤 사건 트리거
+            RandomEventManager eventManager = FindObjectOfType<RandomEventManager>();
+            if (eventManager != null)
+            {
+                eventManager.TriggerRandomEvent();
+            }
+
+            // 사건방은 자동 클리어 (적 없음)
             isCleared = true;
             OpenDoors();
-
-            Debug.Log($"[ROOM] → Calling ActivatePortals...");
             ActivatePortals();
+            return;
+        }
 
-            Debug.Log($"[ROOM] ✓ Room auto-cleared!");
+        // 시작방이고 적이 없으면
+        if (roomData.roomType == RoomType.Start || !roomData.hasEnemies)
+        {
+            Debug.Log($"[ROOM] Room has no enemies - auto cleared!");
+            isCleared = true;
+            OpenDoors();
+            ActivatePortals();
         }
         // 적 생성
-        else if (!isCleared)
+        else if (roomData.hasEnemies && !isCleared)
         {
-            Debug.Log($"[ROOM] → Spawning enemies...");
             SpawnEnemies();
             CloseDoors(); // 전투 중엔 문 닫기
             DeactivatePortals(); // 포탈 비활성화
         }
         else
         {
-            Debug.Log($"[ROOM] → Already cleared, opening...");
             OpenDoors(); // 이미 클리어했으면 문 열기
             ActivatePortals(); // 포탈 활성화
         }
 
-        Debug.Log($"[ROOM] ═══ Activation Complete ═══");
     }
 
     /// <summary>
