@@ -17,6 +17,9 @@ public class Enemy : MonoBehaviour
     public Transform player;
     public SpriteRenderer spriteRenderer;
 
+    [Header("Effects")]
+    [SerializeField] private GameObject hitEffectPrefab;
+
     //상태
     protected int health;
     protected float attackCooldown;
@@ -120,7 +123,12 @@ public class Enemy : MonoBehaviour
     {
         health -= damage;
         Debug.Log($"{data.enemyName} 체력 : {health}/{data.maxHealth}");
-
+        // ★★★ 파티클 이펙트 추가 ★★★
+        if (hitEffectPrefab != null)
+        {
+            GameObject effect = Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
+            Destroy(effect, 1f);
+        }
         //피격 이펙트
         StartCoroutine(HitEffect());
 
@@ -149,7 +157,11 @@ public class Enemy : MonoBehaviour
     protected virtual void Die()
     {
         Debug.Log($"{data.enemyName} 사망");
-
+        // ★★★ 적 사망 소리 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayEnemyDeathSFX();
+        }
         // 골드 드롭
         if (PlayerStats.Instance != null && data != null)
         {

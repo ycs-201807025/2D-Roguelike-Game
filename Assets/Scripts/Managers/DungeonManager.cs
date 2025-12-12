@@ -30,6 +30,11 @@ public class DungeonManager : MonoBehaviour
     void Start()
     {
         Debug.Log("=== DUNGEON MANAGER START ===");
+        // ★★★ 던전 BGM 재생 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayDungeonBGM();
+        }
         GenerateDungeon();
         StartDungeon();
     }
@@ -168,7 +173,14 @@ public class DungeonManager : MonoBehaviour
         }
 
         Debug.Log($"\n>>> Entering Room {roomIndex} <<<");
-
+        // ★★★ 보스방이면 BGM 변경 ★★★
+        Room currentRoom = rooms[currentRoomIndex];
+        if (currentRoom.RoomData != null &&
+            currentRoom.RoomData.roomType == RoomType.Boss &&
+            SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayBossBGM();
+        }
         // 이전 방 비활성화
         if (currentRoomIndex >= 0 && currentRoomIndex < rooms.Count)
         {
@@ -177,7 +189,7 @@ public class DungeonManager : MonoBehaviour
 
         // 새 방 활성화
         currentRoomIndex = roomIndex;
-        Room currentRoom = rooms[currentRoomIndex];
+        
         currentRoom.ActivateRoom();
 
         // 플레이어 이동

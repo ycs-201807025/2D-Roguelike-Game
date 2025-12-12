@@ -110,6 +110,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   data: {fileID: 11400000, guid: 8f4d4b67e44735d49938ffe38b9f7c13, type: 2}
+  rb: {fileID: 0}
+  player: {fileID: 0}
+  spriteRenderer: {fileID: 0}
+  hitEffectPrefab: {fileID: 3678198593554658784, guid: 125185e364561b248b582742e2228016, type: 3}
 --- !u!1 &3120294731078399184
 GameObject:
   m_ObjectHideFlags: 0

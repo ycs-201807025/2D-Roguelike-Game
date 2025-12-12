@@ -197,6 +197,7 @@ MonoBehaviour:
   rb: {fileID: 0}
   player: {fileID: 0}
   spriteRenderer: {fileID: 0}
+  hitEffectPrefab: {fileID: 3678198593554658784, guid: 125185e364561b248b582742e2228016, type: 3}
   phase2HealthPercent: 0.5
   projectilePrefab: {fileID: 7055198487189209420, guid: e1f6a3b53576d224c806f1ac29a0bfef, type: 3}
   projectileCount: 3

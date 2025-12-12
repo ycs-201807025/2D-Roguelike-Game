@@ -14,6 +14,9 @@ public class PlayerWeapon : MonoBehaviour
     [Header("Attack Point")]
     [SerializeField] private Transform attackPoint;//공격 시작 위치
 
+    [Header("Effects")]
+    [SerializeField] private GameObject attackEffectPrefab;
+
     private float attackCooldown = 0f;
     private Camera mainCamera;
 
@@ -54,6 +57,12 @@ public class PlayerWeapon : MonoBehaviour
 
         attackCooldown = currentWeapon.attackSpeed;
 
+        // ★★★ 공격 소리 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayAttackSFX();
+        }
+
         if (currentWeapon.IsMelee)
         {
             MeleeAttack();
@@ -87,9 +96,14 @@ public class PlayerWeapon : MonoBehaviour
                 enemy.TakeDamage(currentWeapon.damage);
             }
         }
-
+        // ★★★ 파티클 이펙트 추가 ★★★
+        if (attackEffectPrefab != null)
+        {
+            GameObject effect = Instantiate(attackEffectPrefab, attackPoint.position, attackPoint.rotation);
+            Destroy(effect, 1f); // 1초 후 자동 삭제
+        }
         //이펙트 
-        if(currentWeapon.attackEffectPrefab != null)
+        if (currentWeapon.attackEffectPrefab != null)
         {
             Instantiate(
                 currentWeapon.attackEffectPrefab,

@@ -8,14 +8,33 @@
 - (다운받은 에셋 추가)
 
 # Sound Effects
-- (나중에 추가)
+- Freesound.org
+  License: CC0 / CC BY 아직 다운x
+- Mixkit
+  Source: https://mixkit.co 아직 다운x
+  License: Mixkit License
 
 # Music
-- (나중에 추가)
+- Kevin MacLeod (Incompetech.com)
+  License: CC BY 4.0
+  Tracks used:
+  * [트랙명]
+  * [트랙명]
+  * [트랙명] 아직 다운x
 
 # Tools
-- Unity Engine
-- Visual Studio / Rider
+- Unity Engine 2022.3.61f1
+- Visual Studio 2022 / Rider
 
 # Development
 - JinMo Jung
+- ChatGPT / Claude for development assistance
+
+# Development Period
+- 8 Days (2025-XX-XX ~ 2025-XX-XX)
+
+# Contact
+- Email: [your email]
+- GitHub: [your github]
+
+=== Thank you for playing! ===

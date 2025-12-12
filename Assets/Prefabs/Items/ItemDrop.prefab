@@ -137,6 +137,7 @@ MonoBehaviour:
   spriteRenderer: {fileID: 8846697829180107094}
   floatSpeed: 1
   floatHeight: 0.3
+  pickupEffectPrefab: {fileID: 3429311794308205477, guid: 7fbadbecc2a3c0749a6ae215b83fa62f, type: 3}
 --- !u!1 &9080134594651889597
 GameObject:
   m_ObjectHideFlags: 0

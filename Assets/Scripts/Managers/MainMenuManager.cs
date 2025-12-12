@@ -28,18 +28,38 @@ public class MainMenuManager : MonoBehaviour
         // 강화 패널 비활성화
         upgradePanel.SetActive(false);
 
+        // ★★★ BGM 재생 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayMainMenuBGM();
+        }
+
         Debug.Log("[MENU] Main Menu Initialized");
     }
 
     void OnStartGame()
     {
         Debug.Log("[MENU] Starting game...");
+
+        // ★★★ 버튼 클릭음 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayButtonClickSFX();
+        }
+
         SceneManager.LoadScene("GamePlay");
     }
 
     void OnOpenUpgrade()
     {
         Debug.Log("[MENU] Opening upgrade panel");
+
+        // ★★★ 버튼 클릭음 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayButtonClickSFX();
+        }
+
         upgradeManager.OpenPanel();
     }
 
@@ -47,10 +67,15 @@ public class MainMenuManager : MonoBehaviour
     {
         Debug.Log("[MENU] Quitting game");
 
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        // ★★★ 버튼 클릭음 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayButtonClickSFX();
+        }
+    #if UNITY_EDITOR
+    UnityEditor.EditorApplication.isPlaying = false;
+    #else
+    Application.Quit();
+    #endif
     }
 }

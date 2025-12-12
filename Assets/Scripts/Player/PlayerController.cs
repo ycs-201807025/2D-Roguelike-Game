@@ -207,6 +207,12 @@ public class PlayerController : MonoBehaviour
         //dashTimer = dashDuration;
         dashCooldownTimer = dashCooldown;
 
+        // ★★★ 대시 소리 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayDashSFX();
+        }
+
         //이동 중일때는 이동방향으로 아닐때는 마우스방향으로
         if (moveInput.magnitude > 0.1f)
         {

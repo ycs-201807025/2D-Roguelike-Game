@@ -194,7 +194,11 @@ public class Room : MonoBehaviour
         isCleared = true;
 
         Debug.Log($"[ROOM] ✓ Room Cleared: {roomData.roomName}");
-
+        // ★★★ 문 열리는 소리 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayDoorOpenSFX();
+        }
         // 문 열기
         OpenDoors();
 

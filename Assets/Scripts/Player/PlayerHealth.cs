@@ -105,6 +105,11 @@ public class PlayerHealth : MonoBehaviour
         }
 
         invincibilityTimer = invincibilityDuration;
+        // ★★★ 피격 소리 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayHitSFX();
+        }
 
         Debug.Log($"[PLAYER HEALTH] Took {damage} damage");
 
@@ -159,7 +164,11 @@ public class PlayerHealth : MonoBehaviour
     private void Die()
     {
         Debug.Log("[PLAYER HEALTH] Player died!");
-
+        // ★★★ 플레이어 사망 소리 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayPlayerDeathSFX();
+        }
         // 영혼 획득 계산 (사망 시에만)
         if (uiPresenter != null && playerStats != null)
         {

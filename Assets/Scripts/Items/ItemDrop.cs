@@ -15,6 +15,9 @@ public class ItemDrop : MonoBehaviour
     [SerializeField] private float floatSpeed = 1f;
     [SerializeField] private float floatHeight = 0.3f;
 
+    [Header("Effects")]
+    [SerializeField] private GameObject pickupEffectPrefab;
+
     private Vector3 startPosition;
     private float floatTimer = 0f;
 
@@ -48,7 +51,17 @@ public class ItemDrop : MonoBehaviour
     void PickUp(GameObject player)
     {
         Debug.Log($"[ITEM DROP] Player picked up: {itemData.itemName}");
-
+        // ★★★ 아이템 획득 소리 추가 ★★★
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayItemPickupSFX();
+        }
+        // ★★★ 파티클 이펙트 추가 ★★★
+        if (pickupEffectPrefab != null)
+        {
+            GameObject effect = Instantiate(pickupEffectPrefab, transform.position, Quaternion.identity);
+            Destroy(effect, 1f);
+        }
         // 인벤토리에 추가
         Inventory inventory = player.GetComponent<Inventory>();
         if (inventory != null)
