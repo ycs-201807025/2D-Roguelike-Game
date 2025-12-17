@@ -43,16 +43,7 @@ public class PlayerStats : MonoBehaviour
     public int Gold => gold;
     public int Souls => souls;
 
-    // 시너지 효과가 적용된 최종 스탯
-    private float finalAtk;
-    private float finalSpd;
-
-    private SynergyManager synergyManager;
-    private void Start()
-    {
-        synergyManager = SynergyManager.Instance;
-        UpdateFinalStats();
-    }
+    
     void Awake()
     {
         if (Instance == null)
@@ -235,41 +226,5 @@ public class PlayerStats : MonoBehaviour
         Debug.Log($"[STATS] Crit Chance increased by {amount}% → {critChance}%");
     }
 
-    // 최종 스탯 계산
-    public void UpdateFinalStats()
-    {
-        if (synergyManager == null) return;
-
-        SynergyEffect effects = synergyManager.CalculateSynergyEffects();
-
-        finalAtk = baseAttackDamage * effects.atkMultiplier;
-        finalSpd = baseMoveSpeed * effects.spdMultiplier;
-    }
-    // 외부에서 사용할 최종 공격력
-    public float GetFinalAttack()
-    {
-        UpdateFinalStats();
-        return finalAtk;
-    }
-
-    // 외부에서 사용할 최종 이동속도
-    public float GetFinalSpeed()
-    {
-        UpdateFinalStats();
-        return finalSpd;
-    }
-
-    // 공격속도 배율 가져오기
-    public float GetAttackSpeedMultiplier()
-    {
-        if (synergyManager == null) return 1f;
-        return synergyManager.CalculateSynergyEffects().atkSpdMultiplier;
-    }
-
-    // 드롭률 배율 가져오기
-    public float GetDropRateMultiplier()
-    {
-        if (synergyManager == null) return 1f;
-        return synergyManager.CalculateSynergyEffects().dropRateMultiplier;
-    }
+    
 }

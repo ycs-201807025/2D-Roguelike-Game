@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 패시브 아이템 타입 정의
+/// </summary>
 public enum PassiveItemType
 {
     Strength,   // 힘

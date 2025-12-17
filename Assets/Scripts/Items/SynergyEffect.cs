@@ -2,6 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// 시너지 효과 데이터 클래스
+/// </summary>
 [System.Serializable]
 public class SynergyEffect
 {
@@ -24,6 +27,7 @@ public class SynergyEffect
     public float berserkerBonus = 0f;       // 광전사 보너스
 
     // 암살자 관련
-    public float critChance = 0f;           // 치명타 확률
-    public float critDamage = 1f;           // 치명타 대미지 배율
+    public float critChance = 0f;           // 치명타 확률 (추가)
+    public float critDamage = 0f;           // 치명타 대미지 (추가)
 }
+
