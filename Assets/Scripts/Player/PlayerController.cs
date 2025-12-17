@@ -153,6 +153,10 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void HandleMovement()
     {
+        // 시너지 효과가 적용된 이동속도 사용
+        float finalMoveSpeed = PlayerStats.Instance != null ?
+            PlayerStats.Instance.GetFinalMoveSpeed() : moveSpeed;
+
         rb.velocity = moveInput * moveSpeed;
 
         //애니메이션 파라미터 

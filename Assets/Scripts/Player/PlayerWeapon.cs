@@ -55,7 +55,11 @@ public class PlayerWeapon : MonoBehaviour
     {
         if (!CanAttack()) return;
 
-        attackCooldown = currentWeapon.attackSpeed;
+        // 시너지 효과가 적용된 공격속도
+        float attackSpeedMultiplier = PlayerStats.Instance != null ?
+            PlayerStats.Instance.GetAttackSpeedMultiplier() : 1f;
+
+        attackCooldown = currentWeapon.attackSpeed / attackSpeedMultiplier;
 
         // ★★★ 공격 소리 추가 ★★★
         if (SoundManager.Instance != null)
@@ -93,6 +97,11 @@ public class PlayerWeapon : MonoBehaviour
             var enemy = hit.GetComponent<Enemy>();
             if (enemy != null)
             {
+                // PlayerStats에서 시너지가 적용된 대미지 계산
+                int damage = PlayerStats.Instance != null ?
+                    PlayerStats.Instance.CalculateDamage() + currentWeapon.damage :
+                    currentWeapon.damage;
+
                 enemy.TakeDamage(currentWeapon.damage);
             }
         }

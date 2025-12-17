@@ -168,12 +168,69 @@ public class Enemy : MonoBehaviour
             PlayerStats.Instance.AddGold(data.goldDrop);
             Debug.Log($"[ENEMY] Dropped {data.goldDrop} gold");
         }
-
+        // 패시브 아이템 드롭 (일정 확률)
+        TryDropPassiveItem();
 
         //오브젝트 제거
         Destroy(gameObject);
     }
+    /// <summary>
+    /// 패시브 아이템 드롭 시도
+    /// </summary>
+    void TryDropPassiveItem()
+    {
+        // 탐험가 시너지 효과 적용
+        float dropRateMultiplier = PlayerStats.Instance != null ?
+            PlayerStats.Instance.GetDropRateMultiplier() : 1f;
 
+        float baseDropChance = 0.15f; // 기본 15% 확률
+        float finalDropChance = baseDropChance * dropRateMultiplier;
+
+        if (Random.value < finalDropChance)
+        {
+            DropRandomPassiveItem();
+        }
+    }
+
+    /// <summary>
+    /// 랜덤 패시브 아이템 드롭
+    /// </summary>
+    void DropRandomPassiveItem()
+    {
+        // Resources 폴더에서 모든 PassiveItemData 로드
+        PassiveItemData[] allItems = Resources.LoadAll<PassiveItemData>("PassiveItems");
+
+        if (allItems.Length == 0)
+        {
+            Debug.LogWarning("[ENEMY] No passive items found in Resources/PassiveItems");
+            return;
+        }
+
+        // 랜덤 선택
+        PassiveItemData randomItem = allItems[Random.Range(0, allItems.Length)];
+
+        // 드롭 오브젝트 생성
+        GameObject dropObj = new GameObject($"Drop_{randomItem.itemName}");
+        dropObj.transform.position = transform.position;
+        dropObj.layer = LayerMask.NameToLayer("Default");
+
+        // PickupPassiveItem 컴포넌트 추가
+        PickupPassiveItem pickup = dropObj.AddComponent<PickupPassiveItem>();
+        pickup.passiveItem = randomItem;
+
+        // 시각적 표현 (SpriteRenderer)
+        SpriteRenderer sr = dropObj.AddComponent<SpriteRenderer>();
+        sr.sprite = randomItem.icon;
+        sr.sortingOrder = 10;
+        sr.color = new Color(0.8f, 0.5f, 1f); // 보라색 톤
+
+        // Collider2D 추가
+        CircleCollider2D col = dropObj.AddComponent<CircleCollider2D>();
+        col.isTrigger = true;
+        col.radius = 0.5f;
+
+        Debug.Log($"[ENEMY] Dropped passive item: {randomItem.itemName} ({randomItem.itemType})");
+    }
     //디버그
     protected virtual void OnDrawGizmosSelected()
     {

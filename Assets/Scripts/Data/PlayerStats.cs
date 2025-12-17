@@ -43,7 +43,13 @@ public class PlayerStats : MonoBehaviour
     public int Gold => gold;
     public int Souls => souls;
 
-    
+    private SynergyManager synergyManager;
+
+    void Start()
+    {
+        synergyManager = SynergyManager.Instance;
+    }
+
     void Awake()
     {
         if (Instance == null)
@@ -125,17 +131,31 @@ public class PlayerStats : MonoBehaviour
     }
 
     /// <summary>
-    /// 데미지 계산 (치명타 포함)
+    /// 데미지 계산 (치명타 + 시너지 효과 포함)
     /// </summary>
     public int CalculateDamage()
     {
-        float damage = attackDamage;
+        // 시너지 효과 가져오기
+        SynergyEffect effects = synergyManager != null ?
+            synergyManager.CalculateSynergyEffects() : new SynergyEffect();
 
-        // 치명타 판정
-        if (UnityEngine.Random.Range(0f, 100f) < critChance)
+        // 기본 공격력에 시너지 배율 적용
+        float damage = attackDamage * effects.atkMultiplier;
+
+        // 치명타 판정 (기본 + 시너지)
+        float totalCritChance = critChance + effects.critChance;
+        if (UnityEngine.Random.Range(0f, 100f) < totalCritChance)
         {
-            damage *= (critDamage / 100f);
+            float totalCritDamage = critDamage + effects.critDamage;
+            damage *= (totalCritDamage / 100f);
             Debug.Log($"[COMBAT] CRITICAL HIT! {damage:F0} damage");
+        }
+
+        // 2배 대미지 확률 (힘 시너지 4)
+        if (UnityEngine.Random.Range(0f, 1f) < effects.doubleDamageChance)
+        {
+            damage *= 2f;
+            Debug.Log($"[COMBAT] DOUBLE DAMAGE! {damage:F0} damage");
         }
 
         return Mathf.RoundToInt(damage);
@@ -226,5 +246,32 @@ public class PlayerStats : MonoBehaviour
         Debug.Log($"[STATS] Crit Chance increased by {amount}% → {critChance}%");
     }
 
-    
+    /// <summary>
+    /// 최종 이동속도 (시너지 포함)
+    /// </summary>
+    public float GetFinalMoveSpeed()
+    {
+        if (synergyManager == null) return moveSpeed;
+
+        SynergyEffect effects = synergyManager.CalculateSynergyEffects();
+        return moveSpeed * effects.spdMultiplier;
+    }
+    /// <summary>
+    /// 공격속도 배율 (시너지 포함)
+    /// </summary>
+    public float GetAttackSpeedMultiplier()
+    {
+        if (synergyManager == null) return 1f;
+
+        return synergyManager.CalculateSynergyEffects().atkSpdMultiplier;
+    }
+    /// <summary>
+    /// 드롭률 배율 (시너지 포함)
+    /// </summary>
+    public float GetDropRateMultiplier()
+    {
+        if (synergyManager == null) return 1f;
+
+        return synergyManager.CalculateSynergyEffects().dropRateMultiplier;
+    }
 }
