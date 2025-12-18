@@ -122,6 +122,8 @@ public class EnemySpawner : MonoBehaviour
         //랜덤 적 선택
         GameObject Prefab = enemyPrefabs[Random.Range(0, enemyPrefabs.Length)];
 
+
+
         //유효한 스폰 위치 찾기
         Vector2 spawnPos = GetValidSpawnPosition();
 

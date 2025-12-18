@@ -167,6 +167,28 @@ public class Room : MonoBehaviour
     private void SpawnEnemyAt(Vector3 position)
     {
         GameObject enemyPrefab = roomData.enemyPrefabs[Random.Range(0, roomData.enemyPrefabs.Length)];
+
+        // ★★★ 프리팹 검증
+        if (enemyPrefab == null)
+        {
+            Debug.LogError($"[ROOM] Enemy prefab is null in {roomData.roomName}!");
+            return;
+        }
+
+        // ★★★ Enemy 컴포넌트 확인
+        Enemy enemyComponent = enemyPrefab.GetComponent<Enemy>();
+        if (enemyComponent == null)
+        {
+            Debug.LogError($"[ROOM] Prefab {enemyPrefab.name} has no Enemy component!");
+            return;
+        }
+
+        // ★★★ EnemyData 확인
+        if (enemyComponent.data == null)
+        {
+            Debug.LogError($"[ROOM] Prefab {enemyPrefab.name} has no EnemyData assigned!");
+            return;
+        }
         GameObject enemy = Instantiate(enemyPrefab, position, Quaternion.identity);
         enemy.transform.SetParent(transform); // 방의 자식으로
         spawnedEnemies.Add(enemy);

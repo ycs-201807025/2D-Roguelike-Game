@@ -193,7 +193,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd70d1adbbe383042a633d5badc8366c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  data: {fileID: 0}
+  data: {fileID: 11400000, guid: 4209daa1d4966ba4d903c60cca0d1219, type: 2}
   rb: {fileID: 0}
   player: {fileID: 0}
   spriteRenderer: {fileID: 0}

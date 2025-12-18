@@ -32,7 +32,11 @@ public class Enemy : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-
+        if (spriteRenderer == null)
+        {
+            // 자식에서도 못 찾았으면 자기 자신에서 찾기
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
         //초기 설정
         if (data != null)
         {
@@ -58,6 +62,8 @@ public class Enemy : MonoBehaviour
     protected virtual void Update()
     {
         if (player == null) return;
+
+        if (data == null) return;
 
         //쿨타임 감소
         if (attackCooldown > 0)
@@ -90,6 +96,7 @@ public class Enemy : MonoBehaviour
     /// </summary>
     protected virtual void ChasePlayer()
     {
+        if (player == null || rb == null || data == null) return;
         Vector2 direction = (player.position - transform.position).normalized;
         rb.velocity = direction * data.moveSpeed;
     }
@@ -121,6 +128,14 @@ public class Enemy : MonoBehaviour
     /// </summary>
     public virtual void TakeDamage(int damage)
     {
+        // ★★★ Null 체크 추가
+        if (data == null)
+        {
+            Debug.LogError($"[ENEMY] {gameObject.name} TakeDamage called but data is null!");
+            Destroy(gameObject);
+            return;
+        }
+
         health -= damage;
         Debug.Log($"{data.enemyName} 체력 : {health}/{data.maxHealth}");
         // ★★★ 파티클 이펙트 추가 ★★★
@@ -148,6 +163,11 @@ public class Enemy : MonoBehaviour
             spriteRenderer.color = Color.red;
             yield return new WaitForSeconds(0.1f);
             spriteRenderer.color = Color.white;
+        }
+        else
+        {
+            // SpriteRenderer가 없으면 그냥 넘어감
+            yield return null;
         }
     }
 

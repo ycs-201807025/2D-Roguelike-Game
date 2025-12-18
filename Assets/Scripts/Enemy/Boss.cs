@@ -16,9 +16,24 @@ public class Boss : Enemy
     private bool isPhase2 = false;
     private float patternCooldown = 0f;
     private int currentPattern = 0;
-
+    
+    protected override void Awake()
+    {
+        base.Awake(); // 부모(Enemy)의 Awake 호출
+        Debug.Log($"[BOSS] {gameObject.name} Awake");
+    }
     protected override void Update()
     {
+        if(data == null) return;
+        if (player == null)
+        {
+            // 플레이어 다시 찾기 시도
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+            if (player == null)
+            {
+                return; // 플레이어 없으면 그냥 리턴
+            }
+        }
         base.Update();
 
         // 페이즈 2 진입 체크
