@@ -63,6 +63,25 @@ public class DungeonManager : MonoBehaviour
                 roomPrefab = bossRoomPrefabs[Random.Range(0, bossRoomPrefabs.Length)];
                 roomTypeLabel = "Boss";
                 Debug.Log($"  → Floor {i + 1}: Boss Room");
+
+                // ★★★ 보스방 프리팹 검증
+                if (roomPrefab != null)
+                {
+                    Room room = roomPrefab.GetComponent<Room>();
+                    if (room == null)
+                    {
+                        Debug.LogError($"[DUNGEON] Boss room prefab has no Room component!");
+                        continue;
+                    }
+
+                    if (room.RoomData == null)
+                    {
+                        Debug.LogError($"[DUNGEON] Boss room has no RoomData!");
+                        continue;
+                    }
+
+                    Debug.Log($"[DUNGEON] Boss room validated: {room.RoomData.roomName}");
+                }
             }
             // 3층마다 사건방 (보스방 아닌 경우)
             else if (i % 3 == 0 && eventRoomPrefabs != null && eventRoomPrefabs.Length > 0)

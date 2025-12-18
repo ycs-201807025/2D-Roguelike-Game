@@ -36,6 +36,18 @@ public class Inventory : MonoBehaviour
         {
             playerWeapon = GetComponent<PlayerWeapon>();
         }
+        if (playerWeapon == null)
+        {
+            Debug.LogWarning("[INVENTORY] PlayerWeapon not found!");
+        }
+
+        // ★★★ 리스트 초기화
+        if (passiveItems == null)
+        {
+            passiveItems = new List<ItemData>();
+        }
+
+        Debug.Log("[INVENTORY] Initialized");
     }
 
     /// <summary>
@@ -59,6 +71,9 @@ public class Inventory : MonoBehaviour
 
             case ItemType.Passive:
                 AddPassive(item);
+                break;
+            default:
+                Debug.LogWarning($"[INVENTORY] Unknown item type: {item.itemType}");
                 break;
         }
     }
@@ -86,6 +101,10 @@ public class Inventory : MonoBehaviour
     /// </summary>
     void AddPassive(ItemData item)
     {
+        if (passiveItems == null)
+        {
+            passiveItems = new List<ItemData>();
+        }
         passiveItems.Add(item);
 
         // 효과 적용

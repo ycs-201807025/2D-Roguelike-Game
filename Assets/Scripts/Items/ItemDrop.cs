@@ -1,9 +1,9 @@
-using System.Collections;
+ï»¿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// ¾ÆÀÌÅÛ µå·Ó ¿ÀºêÁ§Æ®
+/// ì•„ì´í…œ ë“œë¡­ ì˜¤ë¸Œì íŠ¸
 /// </summary>
 public class ItemDrop : MonoBehaviour
 {
@@ -25,7 +25,18 @@ public class ItemDrop : MonoBehaviour
     {
         startPosition = transform.position;
 
-        // ½ºÇÁ¶óÀÌÆ® ¼³Á¤
+        // â˜…â˜…â˜… SpriteRenderer ìë™ ì°¾ê¸°
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
+
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        }
+
+        // ìŠ¤í”„ë¼ì´íŠ¸ ì„¤ì •
         if (spriteRenderer != null && itemData != null && itemData.icon != null)
         {
             spriteRenderer.sprite = itemData.icon;
@@ -34,7 +45,7 @@ public class ItemDrop : MonoBehaviour
 
     void Update()
     {
-        // À§¾Æ·¡·Î ºÎµå·´°Ô ¿òÁ÷ÀÓ
+        // ìœ„ì•„ë˜ë¡œ ë¶€ë“œëŸ½ê²Œ ì›€ì§ì„
         floatTimer += Time.deltaTime * floatSpeed;
         float newY = startPosition.y + Mathf.Sin(floatTimer) * floatHeight;
         transform.position = new Vector3(transform.position.x, newY, transform.position.z);
@@ -42,6 +53,12 @@ public class ItemDrop : MonoBehaviour
 
     void OnTriggerEnter2D(Collider2D collision)
     {
+        // â˜…â˜…â˜… Null ì²´í¬ ì¶”ê°€
+        if (collision == null)
+        {
+            Debug.LogWarning("[ITEM DROP] Collision is null!");
+            return;
+        }
         if (collision.CompareTag("Player"))
         {
             PickUp(collision.gameObject);
@@ -50,36 +67,84 @@ public class ItemDrop : MonoBehaviour
 
     void PickUp(GameObject player)
     {
+        // â˜…â˜…â˜… player null ì²´í¬
+        if (player == null)
+        {
+            Debug.LogError("[ITEM DROP] Player GameObject is null!");
+            Destroy(gameObject);
+            return;
+        }
+
+        // â˜…â˜…â˜… itemData null ì²´í¬
+        if (itemData == null)
+        {
+            Debug.LogError($"[ITEM DROP] {gameObject.name} PickUp called but itemData is null!");
+            Destroy(gameObject);
+            return;
+        }
         Debug.Log($"[ITEM DROP] Player picked up: {itemData.itemName}");
-        // ¡Ú¡Ú¡Ú ¾ÆÀÌÅÛ È¹µæ ¼Ò¸® Ãß°¡ ¡Ú¡Ú¡Ú
+        // â˜…â˜…â˜… ì•„ì´í…œ íšë“ ì†Œë¦¬ ì¶”ê°€ â˜…â˜…â˜…
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlayItemPickupSFX();
         }
-        // ¡Ú¡Ú¡Ú ÆÄÆ¼Å¬ ÀÌÆåÆ® Ãß°¡ ¡Ú¡Ú¡Ú
+        // â˜…â˜…â˜… íŒŒí‹°í´ ì´í™íŠ¸ ì¶”ê°€ â˜…â˜…â˜…
         if (pickupEffectPrefab != null)
         {
             GameObject effect = Instantiate(pickupEffectPrefab, transform.position, Quaternion.identity);
             Destroy(effect, 1f);
         }
-        // ÀÎº¥Åä¸®¿¡ Ãß°¡
+        // ì¸ë²¤í† ë¦¬ì— ì¶”ê°€
         Inventory inventory = player.GetComponent<Inventory>();
+        if (inventory == null)
+        {
+            // ë‹¤ì‹œ ì°¾ê¸° ì‹œë„
+            inventory = player.GetComponentInChildren<Inventory>();
+        }
+        if (inventory == null)
+        {
+            // GameObject.Findë¡œ ë§ˆì§€ë§‰ ì‹œë„
+            GameObject playerObj = GameObject.FindGameObjectWithTag("Player");
+            if (playerObj != null)
+            {
+                inventory = playerObj.GetComponent<Inventory>();
+            }
+        }
+        if (inventory == null)
+        {
+            Debug.LogError($"[ITEM DROP] âŒâŒâŒ Player has no Inventory component! âŒâŒâŒ");
+            Debug.LogError("[ITEM DROP] Please add Inventory script to Player!");
+            Debug.LogError("[ITEM DROP] Item will be destroyed without being added.");
+
+            // ì•„ì´í…œì€ ì œê±° (ë¬´í•œ íšë“ ë°©ì§€)
+            Destroy(gameObject);
+            return;
+        }
         if (inventory != null)
         {
             inventory.AddItem(itemData);
         }
 
-        // ¾ÆÀÌÅÛ Á¦°Å
+        // ì•„ì´í…œ ì œê±°
         Destroy(gameObject);
     }
 
     /// <summary>
-    /// ÃÊ±âÈ­ (µ¿Àû »ı¼º ½Ã »ç¿ë)
+    /// ì´ˆê¸°í™” (ë™ì  ìƒì„± ì‹œ ì‚¬ìš©)
     /// </summary>
     public void Initialize(ItemData data)
     {
         itemData = data;
+        // SpriteRenderer ì°¾ê¸°
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
 
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+        }
         if (spriteRenderer != null && data != null && data.icon != null)
         {
             spriteRenderer.sprite = data.icon;
