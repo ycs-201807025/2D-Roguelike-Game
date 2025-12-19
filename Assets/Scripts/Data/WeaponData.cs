@@ -19,6 +19,14 @@ public class WeaponData : ScriptableObject
     public float attackSpeed = 1f; //공격 속도(쿨타임)
     public float attackRange = 1.5f; //공격 범위
 
+    [Header("Special Properties")]
+    public bool isPiercing = false;          // 관통 (창)
+    public int pierceCount = 0;              // 관통 횟수
+    public bool isAreaAttack = false;        // 광역 공격 (망치)
+    public float areaRadius = 0f;            // 광역 범위
+    public float criticalChance = 0f;        // 치명타 확률 보너스
+    public float criticalDamage = 0f;        // 치명타 피해 보너스
+
     [Header("Projectile (원거리 무기용)")]
     public GameObject projectilePrefab; //투사체 프리팹 null이면 근거리 무기
     public float projectileSpeed = 10f; //투사체 속도

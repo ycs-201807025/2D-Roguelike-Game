@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8de9ac6bbfd5b9247ab6f1ffffc910b1, type: 3}
   m_Name: Item_Sword
   m_EditorClassIdentifier: 
-  itemName: "\uAC80"
+  itemName: "\uD65C"
   itemType: 0
-  description: "\uAE30\uBCF8\uC801\uC778 \uADFC\uC811 \uBB34\uAE30\uC785\uB2C8\uB2E4"
-  icon: {fileID: 21300000, guid: ce93511e8928c7a4bb6070d3acb3f3d5, type: 3}
-  weaponData: {fileID: 11400000, guid: 54b8d25b8aaf1274c87912a2dd0bcc23, type: 2}
+  description: "\uC6D0\uAC70\uB9AC \uACF5\uACA9\uC774 \uAC00\uB2A5\uD55C \uD65C\uC785\uB2C8\uB2E4"
+  icon: {fileID: 21300000, guid: c1250b69570221641bf4d9d54e44301e, type: 3}
+  weaponData: {fileID: 11400000, guid: ec69cc8c749365444b48ba04dde044a7, type: 2}
   effectType: 0
   effectValue: 0
-  dropChance: 0.6
+  dropChance: 0.5
