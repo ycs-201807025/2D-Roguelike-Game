@@ -11,6 +11,8 @@ public class WeaponData : ScriptableObject
     [Header("Weapon Info")]
     public string weaponName = "Sword";
     public Sprite weaponIcon;
+    public WeaponType weaponType = WeaponType.Sword; 
+    public WeaponRarity rarity = WeaponRarity.Common; 
 
     [Header("Attack Settings")]
     public int damage = 10;//공격력
@@ -28,4 +30,42 @@ public class WeaponData : ScriptableObject
     ///근접무기 
     ///</summary>
     public bool IsMelee => projectilePrefab == null;
+
+    /// <summary>
+    /// 등급에 따른 색상 반환
+    /// </summary>
+    public Color GetRarityColor()
+    {
+        switch (rarity)
+        {
+            case WeaponRarity.Common:
+                return new Color(0.7f, 0.7f, 0.7f); // 회색
+            case WeaponRarity.Uncommon:
+                return new Color(0.2f, 0.8f, 0.2f); // 초록
+            case WeaponRarity.Rare:
+                return new Color(0.2f, 0.5f, 1f);   // 파랑
+            case WeaponRarity.Epic:
+                return new Color(0.6f, 0.2f, 0.8f); // 보라
+            case WeaponRarity.Legendary:
+                return new Color(1f, 0.6f, 0f);     // 주황
+            default:
+                return Color.white;
+        }
+    }
+
+    /// <summary>
+    /// 등급명 반환
+    /// </summary>
+    public string GetRarityName()
+    {
+        switch (rarity)
+        {
+            case WeaponRarity.Common: return "일반";
+            case WeaponRarity.Uncommon: return "고급";
+            case WeaponRarity.Rare: return "희귀";
+            case WeaponRarity.Epic: return "영웅";
+            case WeaponRarity.Legendary: return "전설";
+            default: return "알 수 없음";
+        }
+    }
 }
