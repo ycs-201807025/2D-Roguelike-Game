@@ -250,15 +250,90 @@ public class Boss : Enemy
         }
 
         // 보스는 확정 아이템 드롭
-        DropGuaranteedItem();
+        // ★★★ 레어 무기 확정 드롭
+        DropRareWeapon();
 
         Destroy(gameObject);
     }
 
-    void DropGuaranteedItem()
+    /// <summary>
+    /// 레어 무기 드롭
+    /// </summary>
+    void DropRareWeapon()
     {
-        // 보스 아이템 드롭 로직 (확정)
-        // TODO: 특별한 아이템 드롭
-        Debug.Log("[BOSS] Dropped guaranteed item!");
+        // Resources에서 Epic 이상 무기 로드
+        WeaponData[] allWeapons = Resources.LoadAll<WeaponData>("ScriptableObjects/Weapons");
+
+        if (allWeapons == null || allWeapons.Length == 0)
+        {
+            Debug.LogWarning("[BOSS] No weapons found in Resources!");
+            return;
+        }
+
+        // Epic 또는 Legendary만 필터링
+        List<WeaponData> rareWeapons = new List<WeaponData>();
+        foreach (var weapon in allWeapons)
+        {
+            if (weapon.rarity == WeaponRarity.Epic || weapon.rarity == WeaponRarity.Legendary)
+            {
+                rareWeapons.Add(weapon);
+            }
+        }
+
+        if (rareWeapons.Count == 0)
+        {
+            Debug.LogWarning("[BOSS] No Epic/Legendary weapons found!");
+            return;
+        }
+
+        // 랜덤 선택
+        WeaponData selectedWeapon = rareWeapons[Random.Range(0, rareWeapons.Count)];
+
+        // 무기 드롭 오브젝트 생성
+        CreateWeaponDrop(selectedWeapon, transform.position);
+    }
+
+    /// <summary>
+    /// 무기 드롭 생성
+    /// </summary>
+    void CreateWeaponDrop(WeaponData weapon, Vector3 position)
+    {
+        if (weapon == null) return;
+
+        // 드롭 오브젝트 생성
+        GameObject dropObj = new GameObject($"WeaponDrop_{weapon.weaponName}");
+        dropObj.transform.position = position;
+        dropObj.layer = LayerMask.NameToLayer("Default");
+
+        // WeaponDrop 컴포넌트
+        WeaponDrop drop = dropObj.AddComponent<WeaponDrop>();
+        drop.Initialize(weapon);
+
+        // SpriteRenderer
+        SpriteRenderer sr = dropObj.AddComponent<SpriteRenderer>();
+        if (weapon.weaponIcon != null)
+        {
+            sr.sprite = weapon.weaponIcon;
+        }
+        sr.sortingOrder = 10;
+        sr.color = weapon.GetRarityColor();
+
+        // 글로우 효과 (자식 오브젝트)
+        GameObject glowObj = new GameObject("Glow");
+        glowObj.transform.SetParent(dropObj.transform);
+        glowObj.transform.localPosition = Vector3.zero;
+        glowObj.transform.localScale = Vector3.one * 1.5f;
+
+        SpriteRenderer glowSr = glowObj.AddComponent<SpriteRenderer>();
+        glowSr.sprite = sr.sprite;
+        glowSr.sortingOrder = 9;
+        glowSr.color = new Color(weapon.GetRarityColor().r, weapon.GetRarityColor().g, weapon.GetRarityColor().b, 0.5f);
+
+        // Collider
+        CircleCollider2D col = dropObj.AddComponent<CircleCollider2D>();
+        col.isTrigger = true;
+        col.radius = 0.8f;
+
+        Debug.Log($"[BOSS] Dropped {weapon.GetRarityName()} weapon: {weapon.weaponName}");
     }
 }
