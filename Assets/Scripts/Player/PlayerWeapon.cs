@@ -8,6 +8,11 @@ using UnityEngine;
 /// </summary>
 public class PlayerWeapon : MonoBehaviour
 {
+    #region Constants
+    private const string ENEMY_LAYER = "Enemy";
+    #endregion
+
+    #region Serialized Fields
     [Header("Weapon")]
     [SerializeField] private WeaponData currentWeapon;
 
@@ -16,10 +21,14 @@ public class PlayerWeapon : MonoBehaviour
 
     [Header("Effects")]
     [SerializeField] private GameObject attackEffectPrefab;
+    #endregion
 
+    #region State
     private float attackCooldown = 0f;
     private Camera mainCamera;
+    #endregion
 
+    #region Unity Lifecycle
     void Awake()
     {
         mainCamera = Camera.main;
@@ -27,19 +36,24 @@ public class PlayerWeapon : MonoBehaviour
 
     private void Update()
     {
-        //쿨다운 감소
+        UpdateCooldown();
+    }
+    #endregion
+
+    #region Cooldown Management
+    /// <summary>
+    /// 쿨다운 감소
+    /// </summary>
+    private void UpdateCooldown()
+    {
         if (attackCooldown > 0)
         {
             attackCooldown -= Time.deltaTime;
         }
-
-        ////공격 입력(좌클릭) - 상태머신으로 이동
-        //if (Input.GetMouseButtonDown(0) && CanAttack())
-        //{
-        //    Attack();
-        //}
     }
+    #endregion
 
+    #region Attack System
     /// <summary>
     /// 공격 가능 여부
     /// </summary>
@@ -55,63 +69,127 @@ public class PlayerWeapon : MonoBehaviour
     {
         if (!CanAttack()) return;
 
-        // 시너지 효과가 적용된 공격속도
-        float attackSpeedMultiplier = PlayerStats.Instance != null ?
-            PlayerStats.Instance.GetAttackSpeedMultiplier() : 1f;
+        SetAttackCooldown();
+        PlayAttackSound();
 
+        if (currentWeapon.IsMelee)
+        {
+            PerformMeleeAttack();
+        }
+        else
+        {
+            PerformRangedAttack();
+        }
+
+        Debug.Log($"[PLAYER WEAPON] {currentWeapon.weaponName} 공격!");
+    }
+
+    /// <summary>
+    /// 공격 쿨다운 설정
+    /// </summary>
+    private void SetAttackCooldown()
+    {
+        float attackSpeedMultiplier = GetAttackSpeedMultiplier();
         attackCooldown = currentWeapon.attackSpeed / attackSpeedMultiplier;
+    }
 
-        // ★★★ 공격 소리 추가 ★★★
+    /// <summary>
+    /// 공격 속도 배율 가져오기 (시너지 포함)
+    /// </summary>
+    private float GetAttackSpeedMultiplier()
+    {
+        if (PlayerStats.Instance != null)
+        {
+            return PlayerStats.Instance.GetAttackSpeedMultiplier();
+        }
+        return 1f;
+    }
+
+    /// <summary>
+    /// 공격 사운드 재생
+    /// </summary>
+    private void PlayAttackSound()
+    {
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlayAttackSFX();
         }
-
-        if (currentWeapon.IsMelee)
-        {
-            MeleeAttack();
-        }
-        else
-        {
-            RangedAttack();
-  
-        }
-        Debug.Log($"{currentWeapon.weaponName}공격!");
     }
+    #endregion
 
-    ///<summary>
-    ///근접공격
-    ///</summary>
-    private void MeleeAttack()
+    #region Melee Attack
+    /// <summary>
+    /// 근접 공격 실행
+    /// </summary>
+    private void PerformMeleeAttack()
     {
-        //공격 범위 내 적 탐지
-        Collider2D[] hits = Physics2D.OverlapCircleAll(
+        Collider2D[] hits = DetectEnemiesInRange();
+        DamageAllHits(hits);
+        SpawnAttackEffect();
+    }
+    /// <summary>
+    /// 범위 내 적 탐지
+    /// </summary>
+    private Collider2D[] DetectEnemiesInRange()
+    {
+        return Physics2D.OverlapCircleAll(
             attackPoint.position,
             currentWeapon.attackRange,
-            LayerMask.GetMask("Enemy") //적(Enemy) 레이어
+            LayerMask.GetMask(ENEMY_LAYER)
         );
+    }
 
+    /// <summary>
+    /// 탐지된 모든 적에게 데미지
+    /// </summary>
+    private void DamageAllHits(Collider2D[] hits)
+    {
         foreach (Collider2D hit in hits)
         {
-            //적 데미지 처리
-            var enemy = hit.GetComponent<Enemy>();
-            if (enemy != null)
-            {
-                // PlayerStats에서 시너지가 적용된 대미지 계산
-                int damage = PlayerStats.Instance != null ?
-                    PlayerStats.Instance.CalculateDamage() + currentWeapon.damage :
-                    currentWeapon.damage;
-
-                enemy.TakeDamage(currentWeapon.damage);
-            }
+            DamageEnemy(hit);
         }
-        // ★★★ 파티클 이펙트 추가 ★★★
+    }
+
+    /// <summary>
+    /// 개별 적에게 데미지
+    /// </summary>
+    private void DamageEnemy(Collider2D hit)
+    {
+        Enemy enemy = hit.GetComponent<Enemy>();
+        if (enemy != null)
+        {
+            int damage = CalculateDamage();
+            enemy.TakeDamage(damage);
+        }
+    }
+
+    /// <summary>
+    /// 최종 데미지 계산 (시너지 포함)
+    /// </summary>
+    private int CalculateDamage()
+    {
+        if (PlayerStats.Instance != null)
+        {
+            return PlayerStats.Instance.CalculateDamage() + currentWeapon.damage;
+        }
+        return currentWeapon.damage;
+    }
+
+    /// <summary>
+    /// 공격 이펙트 생성
+    /// </summary>
+    private void SpawnAttackEffect()
+    {
         if (attackEffectPrefab != null)
         {
-            GameObject effect = Instantiate(attackEffectPrefab, attackPoint.position, attackPoint.rotation);
-            Destroy(effect, 1f); // 1초 후 자동 삭제
+            GameObject effect = Instantiate(
+                attackEffectPrefab,
+                attackPoint.position,
+                attackPoint.rotation
+            );
+            Destroy(effect, 1f);
         }
-        //이펙트 
+
         if (currentWeapon.attackEffectPrefab != null)
         {
             Instantiate(
@@ -121,45 +199,82 @@ public class PlayerWeapon : MonoBehaviour
             );
         }
     }
+    #endregion
+
+    #region Ranged Attack
     /// <summary>
-    /// 원거리 공격
+    /// 원거리 공격 실행
     /// </summary>
-    private void RangedAttack()
+    private void PerformRangedAttack()
     {
-        if (currentWeapon.projectilePrefab == null)
+        if (!ValidateProjectile())
         {
-            Debug.LogWarning("원거리 무기인데 투사체 프리팹이 없습니다!");
             return;
         }
 
-        // 투사체 생성
-        GameObject projectileObj = Instantiate(
+        GameObject projectile = SpawnProjectile();
+        InitializeProjectile(projectile);
+    }
+
+    /// <summary>
+    /// 투사체 유효성 검사
+    /// </summary>
+    private bool ValidateProjectile()
+    {
+        if (currentWeapon.projectilePrefab == null)
+        {
+            Debug.LogWarning("[PLAYER WEAPON] 원거리 무기인데 투사체 프리팹이 없습니다!");
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 투사체 생성
+    /// </summary>
+    private GameObject SpawnProjectile()
+    {
+        return Instantiate(
             currentWeapon.projectilePrefab,
             attackPoint.position,
             attackPoint.rotation
         );
+    }
 
-        // 투사체 초기화
+    /// <summary>
+    /// 투사체 초기화
+    /// </summary>
+    private void InitializeProjectile(GameObject projectileObj)
+    {
         Projectile projectile = projectileObj.GetComponent<Projectile>();
         if (projectile != null)
         {
-            // 발사 방향 (attackPoint의 up 방향)
             Vector2 direction = attackPoint.up;
-            projectile.Initialize(currentWeapon.damage, currentWeapon.projectileSpeed, direction);
+            int damage = CalculateDamage();
+            projectile.Initialize(damage, currentWeapon.projectileSpeed, direction);
         }
         else
         {
-            Debug.LogError("투사체에 Projectile 컴포넌트가 없습니다!");
+            Debug.LogError("[PLAYER WEAPON] 투사체에 Projectile 컴포넌트가 없습니다!");
         }
     }
+    #endregion
 
+    #region Weapon Management
     /// <summary>
     /// 무기 변경
     /// </summary>
     public void ChangeWeapon(WeaponData newWeapon)
     {
+        if (newWeapon == null)
+        {
+            Debug.LogWarning("[PLAYER WEAPON] Cannot change to null weapon");
+            return;
+        }
+
         currentWeapon = newWeapon;
         attackCooldown = 0;
+
         Debug.Log($"무기 변경: {newWeapon.weaponName}");
     }
     /// <summary>
@@ -178,6 +293,9 @@ public class PlayerWeapon : MonoBehaviour
 
         Debug.Log($"[PLAYER WEAPON] Equipped: {newWeapon.weaponName}");
     }
+    #endregion
+
+    #region Debug
     //디버그
     void OnDrawGizmosSelected()
     {
@@ -188,4 +306,5 @@ public class PlayerWeapon : MonoBehaviour
         }
        
     }
+    #endregion
 }
