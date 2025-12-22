@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8de9ac6bbfd5b9247ab6f1ffffc910b1, type: 3}
   m_Name: Item_Dagger
   m_EditorClassIdentifier: 
-  itemName: Item
+  itemName: "\uB2E8\uB3C4"
   itemType: 0
-  description: "\uC544\uC774\uD15C \uC124\uBA85"
+  description: "\uBE60\uB978 \uACF5\uACA9\uC744 \uD558\uB294 \uB2E8\uB3C4\uC785\uB2C8\uB2E4"
   icon: {fileID: 0}
-  weaponData: {fileID: 0}
+  weaponData: {fileID: 11400000, guid: 28c96a463de255d498c9041ef43d35d4, type: 2}
   effectType: 0
   effectValue: 0
   dropChance: 0.5

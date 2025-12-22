@@ -18,5 +18,5 @@ MonoBehaviour:
   icon: {fileID: 0}
   weaponData: {fileID: 0}
   effectType: 3
-  effectValue: 0
+  effectValue: 20
   dropChance: 0.5

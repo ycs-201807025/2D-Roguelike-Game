@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8de9ac6bbfd5b9247ab6f1ffffc910b1, type: 3}
   m_Name: Item_Spear
   m_EditorClassIdentifier: 
-  itemName: Item
+  itemName: "\uCC3D"
   itemType: 0
-  description: "\uC544\uC774\uD15C \uC124\uBA85"
-  icon: {fileID: 0}
-  weaponData: {fileID: 0}
+  description: "\uCC0C\uB974\uAE30 \uACF5\uACA9\uC744 \uD558\uB294 \uCC3D\uC785\uB2C8\uB2E4 "
+  icon: {fileID: 21300000, guid: 9b1771dd88af66e4384fdd00c98303f3, type: 3}
+  weaponData: {fileID: 11400000, guid: 549d5d768b672804685a2be08c6e93ea, type: 2}
   effectType: 0
   effectValue: 0
   dropChance: 0.5

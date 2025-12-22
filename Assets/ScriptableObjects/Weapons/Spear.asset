@@ -12,13 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f80178b1e86a07f46a9e09436e7e46bd, type: 3}
   m_Name: Spear
   m_EditorClassIdentifier: 
-  weaponName: Sword
-  weaponIcon: {fileID: 0}
-  weaponType: 0
-  rarity: 0
-  damage: 10
-  attackSpeed: 1
-  attackRange: 1.5
+  weaponName: Spear
+  weaponIcon: {fileID: 21300000, guid: 9b1771dd88af66e4384fdd00c98303f3, type: 3}
+  weaponType: 3
+  rarity: 1
+  damage: 20
+  attackSpeed: 0.7
+  attackRange: 2.5
+  isPiercing: 1
+  pierceCount: 2
+  isAreaAttack: 0
+  areaRadius: 0
+  criticalChance: 0
+  criticalDamage: 0
   projectilePrefab: {fileID: 0}
   projectileSpeed: 10
   attackEffectPrefab: {fileID: 0}

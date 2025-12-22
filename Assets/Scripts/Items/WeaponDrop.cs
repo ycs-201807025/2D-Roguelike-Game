@@ -110,6 +110,12 @@ public class WeaponDrop : MonoBehaviour
 
         Debug.Log($"[WEAPON DROP] Player picked up: {weaponData.weaponName} ({weaponData.GetRarityName()})");
 
+        //UI 표시 
+        if (WeaponAcquiredUI.Instance != null)
+        {
+            WeaponAcquiredUI.Instance.ShowWeaponAcquired(weaponData);
+        }
+
         // 사운드
         if (SoundManager.Instance != null)
         {

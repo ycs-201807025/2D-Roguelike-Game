@@ -12,19 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f80178b1e86a07f46a9e09436e7e46bd, type: 3}
   m_Name: Crossbow
   m_EditorClassIdentifier: 
-  weaponName: Sword
+  weaponName: Crossbow
   weaponIcon: {fileID: 0}
-  weaponType: 0
-  rarity: 0
-  damage: 10
+  weaponType: 7
+  rarity: 2
+  damage: 30
   attackSpeed: 1
-  attackRange: 1.5
+  attackRange: 300
   isPiercing: 0
   pierceCount: 0
   isAreaAttack: 0
   areaRadius: 0
-  criticalChance: 0
+  criticalChance: 0.15
   criticalDamage: 0
-  projectilePrefab: {fileID: 0}
-  projectileSpeed: 10
+  projectilePrefab: {fileID: 1592804562382812946, guid: 106f083ebf456af44bee14c1b74cf3b7, type: 3}
+  projectileSpeed: 20
   attackEffectPrefab: {fileID: 0}
