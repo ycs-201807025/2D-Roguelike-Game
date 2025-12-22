@@ -14,6 +14,12 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerStateMachine))]
 public class PlayerController : MonoBehaviour
 {
+    #region Constants
+    private const float ROTATION_OFFSET = 90f;
+    private const float MIN_MOVE_INPUT = 0.1f;
+    #endregion
+
+    #region Serialized Fields
     [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
 
@@ -21,29 +27,33 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float dashSpeed = 15f;
     [SerializeField] private float dashDuration = 0.2f;
     [SerializeField] private float dashCooldown = 1f;
+    #endregion
 
-    [Header("References")]
+    #region Components
     private Rigidbody2D rb;
     private Camera mainCamera;
     private Animator animator;
     private DashAfterImage dashAfterImage;
     private PlayerWeapon playerWeapon;
     private PlayerStateMachine stateMachine;
+    #endregion
 
+    #region Input State
     private Vector2 moveInput;
     private Vector2 mousePosition;
     private bool dashInput;
     private bool attackInput;
+    private bool inputEnabled = true;
+    #endregion
 
-    //대시 관련
-    //private bool isDashing = false;
-    //private float dashTimer = 0f;
+    #region Dash State
     private float dashCooldownTimer = 0f;
     private Vector2 dashDirection;
+    #endregion
 
     //입력 활성화
-    private bool inputEnabled = true;
 
+    #region Properties
     //상태에서 접근
     public Vector2 MoveInput => moveInput;
     public bool HasMoveInput => moveInput.magnitude > 0.1f;
@@ -51,17 +61,14 @@ public class PlayerController : MonoBehaviour
     public bool IsAttackInput => attackInput;
     public float DashDuration => dashDuration;
     public Vector2 DashDirection => dashDirection;
+    #endregion
 
+    #region Unity Lifecycle
     void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
-        mainCamera = Camera.main;
-        animator = GetComponent<Animator>();
-        dashAfterImage = GetComponent<DashAfterImage>();
-        playerWeapon = GetComponent<PlayerWeapon>();
-        stateMachine = GetComponent<PlayerStateMachine>();
+        InitializeComponents();
     }
-
+    
     void Update()
     {
         if (!inputEnabled) return;
@@ -71,53 +78,30 @@ public class PlayerController : MonoBehaviour
 
         //쿨다운 업데이트
         UpdateCooldowns();
-
-        ////대시 중이 아닐 때만 입력 받음
-        //if (!isDashing)
-        //{ 
-        //    // 이동 입력 받기
-        //    HandleInput();
-        //    // 마우스 방향 회전
-        //    HandleRotation();
-        //}
-
-        ////대시 쿨다운
-        //if (dashCooldownTimer > 0)
-        //{
-        //    dashCooldownTimer -= Time.deltaTime;
-        //}
-
-        ////대시 타이머
-        //if (isDashing)
-        //{
-        //    dashTimer -= Time.deltaTime;
-        //    if (dashTimer <= 0)
-        //    {
-        //        EndDash();
-        //    }
-        //}
     }
+    #endregion
 
-    //void FixedUpdate()
-    //{
-    //    if (isDashing)
-    //    {
-    //        HandleDash();
-    //    }
-    //    else
-    //    {
-    //        //이동 처리
-    //        HandleMovement();
-    //    }
-            
+    #region Initialization
+    /// <summary>
+    /// 필수 컴포넌트 초기화
+    /// </summary>
+    private void InitializeComponents()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        mainCamera = Camera.main;
+        animator = GetComponent<Animator>();
+        dashAfterImage = GetComponent<DashAfterImage>();
+        playerWeapon = GetComponent<PlayerWeapon>();
+        stateMachine = GetComponent<PlayerStateMachine>();
 
-    //    //최대 속도 제한
-    //    if (rb.velocity.magnitude > maxSpeed)
-    //    {
-    //        rb.velocity = rb.velocity.normalized * maxSpeed;
-    //    }
-    //}
+        if (mainCamera == null)
+        {
+            Debug.LogError("[PLAYER] Main Camera not found!");
+        }
+    }
+    #endregion
 
+    #region Input Handling
     /// <summary>
     /// 키보드 마우스 입력 처리
     /// </summary>
@@ -129,16 +113,19 @@ public class PlayerController : MonoBehaviour
         moveInput = new Vector2(horizontal, vertical).normalized;
 
         //마우스 위치
-        mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-
+        if (mainCamera != null)
+        {
+            mousePosition = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        }
         // 대시 입력
         dashInput = Input.GetKeyDown(KeyCode.Space);
 
         //공격 입력
         attackInput = Input.GetMouseButtonDown(0);
     }
-    ///<summary
-    ///쿨다운 업데이트
+
+    ///<summary>
+    /// 쿨다운 업데이트
     ///</summary>
     private void UpdateCooldowns()
     {
@@ -147,19 +134,47 @@ public class PlayerController : MonoBehaviour
             dashCooldownTimer -= Time.deltaTime;
         }
     }
+    #endregion
 
+    #region Movement
     /// <summary>
     /// 플레이어 이동
     /// </summary>
     public void HandleMovement()
     {
-        // 시너지 효과가 적용된 이동속도 사용
-        float finalMoveSpeed = PlayerStats.Instance != null ?
-            PlayerStats.Instance.GetFinalMoveSpeed() : moveSpeed;
+        float finalMoveSpeed = GetFinalMoveSpeed();
+        rb.velocity = moveInput * finalMoveSpeed;
 
-        rb.velocity = moveInput * moveSpeed;
+        UpdateMovementAnimation();
+        //// 시너지 효과가 적용된 이동속도 사용
+        //float finalMoveSpeed = PlayerStats.Instance != null ?
+        //    PlayerStats.Instance.GetFinalMoveSpeed() : moveSpeed;
 
-        //애니메이션 파라미터 
+        //rb.velocity = moveInput * moveSpeed;
+
+        ////애니메이션 파라미터 
+        //if (animator != null)
+        //{
+        //    animator.SetFloat("Speed", moveInput.magnitude);
+        //}
+    }
+    /// <summary>
+    /// 최종 이동 속도 계산 (시너지 효과 포함)
+    /// </summary>
+    private float GetFinalMoveSpeed()
+    {
+        if (PlayerStats.Instance != null)
+        {
+            return PlayerStats.Instance.GetFinalMoveSpeed();
+        }
+        return moveSpeed;
+    }
+
+    /// <summary>
+    /// 이동 애니메이션 업데이트
+    /// </summary>
+    private void UpdateMovementAnimation()
+    {
         if (animator != null)
         {
             animator.SetFloat("Speed", moveInput.magnitude);
@@ -169,17 +184,27 @@ public class PlayerController : MonoBehaviour
     /// <summary>
     /// 마우스 방향 회전
     /// </summary>
-    
     public void HandleRotation()
     {
-        //플레이어 -> 마우스 방향 벡터
         Vector2 direction = mousePosition - (Vector2)transform.position;
+        float angle = CalculateRotationAngle(direction);
+        transform.rotation = Quaternion.Euler(0, 0, angle - ROTATION_OFFSET);
+        ////플레이어 -> 마우스 방향 벡터
+        //Vector2 direction = mousePosition - (Vector2)transform.position;
 
-        //각도 계산
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        ////각도 계산
+        //float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
 
-        //회전 적용
-        transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
+        ////회전 적용
+        //transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
+    }
+
+    /// <summary>
+    /// 방향 벡터로부터 회전 각도 계산
+    /// </summary>
+    private float CalculateRotationAngle(Vector2 direction)
+    {
+        return Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
     }
     /// <summary>
     /// 이동 정지
@@ -188,12 +213,11 @@ public class PlayerController : MonoBehaviour
     {
         rb.velocity = Vector2.zero;
 
-        if (animator != null)
-        {
-            animator.SetFloat("Speed", 0f);
-        }
+        UpdateMovementAnimation();
     }
+    #endregion
 
+    #region Dash
     /// <summary>
     /// 대시 가능 여부 확인
     /// </summary>
@@ -206,42 +230,92 @@ public class PlayerController : MonoBehaviour
     /// 대시 시작
     /// </summary>
     public void StartDash()
-    {
-        //isDashing = true;
-        //dashTimer = dashDuration;
+    {       
         dashCooldownTimer = dashCooldown;
 
-        // ★★★ 대시 소리 추가 ★★★
-        if (SoundManager.Instance != null)
-        {
-            SoundManager.Instance.PlayDashSFX();
-        }
+        PlayDashSound();
+        CalculateDashDirection();
+        StartDashAfterImage();
+        PlayDashAnimation();
+        //// ★★★ 대시 소리 추가 ★★★
+        //if (SoundManager.Instance != null)
+        //{
+        //    SoundManager.Instance.PlayDashSFX();
+        //}
 
-        //이동 중일때는 이동방향으로 아닐때는 마우스방향으로
-        if (moveInput.magnitude > 0.1f)
+        ////이동 중일때는 이동방향으로 아닐때는 마우스방향으로
+        //if (moveInput.magnitude > 0.1f)
+        //{
+        //    dashDirection = moveInput;
+        //}
+        //else
+        //{
+        //    dashDirection = (mousePosition - (Vector2)transform.position).normalized;
+        //}
+
+        ////잔상 효과 시작
+        //if (dashAfterImage != null)
+        //{
+        //    dashAfterImage.StartDash();
+        //    //Debug.Log("DashAfterimage.StartDash() 호출됨");
+        //}
+
+        ////애니메이션
+        //if (animator != null)
+        //{
+        //    animator.SetTrigger("Dash");
+        //}
+        ////Debug.Log("PlayerController.StartDash() 호출됨");
+    }
+    /// <summary>
+    /// 대시 방향 계산
+    /// </summary>
+    private void CalculateDashDirection()
+    {
+        if (moveInput.magnitude > MIN_MOVE_INPUT)
         {
+            // 이동 중이면 이동 방향으로
             dashDirection = moveInput;
         }
         else
         {
+            // 정지 중이면 마우스 방향으로
             dashDirection = (mousePosition - (Vector2)transform.position).normalized;
         }
+    }
 
-        //잔상 효과 시작
+    /// <summary>
+    /// 대시 잔상 효과 시작
+    /// </summary>
+    private void StartDashAfterImage()
+    {
         if (dashAfterImage != null)
         {
             dashAfterImage.StartDash();
-            //Debug.Log("DashAfterimage.StartDash() 호출됨");
         }
+    }
 
-        //애니메이션
+    /// <summary>
+    /// 대시 애니메이션 재생
+    /// </summary>
+    private void PlayDashAnimation()
+    {
         if (animator != null)
         {
             animator.SetTrigger("Dash");
         }
-        //Debug.Log("PlayerController.StartDash() 호출됨");
     }
 
+    /// <summary>
+    /// 대시 사운드 재생
+    /// </summary>
+    private void PlayDashSound()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayDashSFX();
+        }
+    }
     /// <summary>
     /// 대시 중 이동 처리
     /// </summary>
@@ -255,18 +329,14 @@ public class PlayerController : MonoBehaviour
     /// </summary>
     public void EndDash()
     {
-        //isDashing = false;
-        //rb.velocity = Vector2.zero;
-
         //잔상 효과 종료
         if (dashAfterImage != null)
         {
             dashAfterImage.StopDash();
-            //Debug.Log("DashAfterimage.StopDash() 호출됨");
         }
-        //Debug.Log("PlayerController.EndDash() 호출됨");
     }
-
+    #endregion
+    #region Attack
     /// <summary>
     /// 공격 가능 여부
     /// </summary>
@@ -285,18 +355,16 @@ public class PlayerController : MonoBehaviour
             playerWeapon.Attack();
         }
     }
-
+    #endregion
+    #region Input Control
     /// <summary>
     /// 입력 비활성화
     /// </summary>
     public void DisableInput()
     {
         inputEnabled = false;
-        moveInput = Vector2.zero;
-        dashInput = false;
-        attackInput = false;
+        ResetInput();
     }
-
     /// <summary>
     /// 입력 활성화
     /// </summary>
@@ -304,22 +372,48 @@ public class PlayerController : MonoBehaviour
     {
         inputEnabled = true;
     }
-
+    /// <summary>
+    /// 입력 상태 초기화
+    /// </summary>
+    private void ResetInput()
+    {
+        moveInput = Vector2.zero;
+        dashInput = false;
+        attackInput = false;
+    }
+    #endregion
+    #region Debug
     //디버그 용 : 이동방향 표시
     void OnDrawGizmos()
     {
         if (Application.isPlaying && mainCamera != null)
         {
             // 플레이어 → 마우스 방향 선 그리기
-            Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
-            Gizmos.color = Color.red;
-            Gizmos.DrawLine(transform.position, mousePos);
+            DrawMouseDirectionLine();
             //대시 쿨다운
-            if(dashCooldownTimer > 0)
-            {
-                Gizmos.color = Color.blue;
-                Gizmos.DrawWireSphere(transform.position, 0.5f);
-            }
+            DrawDashCooldownIndicator();
         }
     }
+    /// <summary>
+    /// 마우스 방향 선 그리기
+    /// </summary>
+    private void DrawMouseDirectionLine()
+    {
+        Vector2 mousePos = mainCamera.ScreenToWorldPoint(Input.mousePosition);
+        Gizmos.color = Color.red;
+        Gizmos.DrawLine(transform.position, mousePos);
+    }
+
+    /// <summary>
+    /// 대시 쿨다운 표시
+    /// </summary>
+    private void DrawDashCooldownIndicator()
+    {
+        if (dashCooldownTimer > 0)
+        {
+            Gizmos.color = Color.blue;
+            Gizmos.DrawWireSphere(transform.position, 0.5f);
+        }
+    }
+    #endregion
 }
