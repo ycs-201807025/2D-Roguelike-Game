@@ -9,147 +9,308 @@ using UnityEngine;
 [RequireComponent(typeof(Rigidbody2D))]
 public class Enemy : MonoBehaviour
 {
+    #region Constants
+    private const string PLAYER_TAG = "Player";
+    private const float HIT_EFFECT_DURATION = 0.1f;
+    private const float EFFECT_DESTROY_TIME = 1f;
+    #endregion
+
+    #region Serialized Fields
     [Header("Data")]
     [SerializeField] public EnemyData data;
 
-    [Header("References")]
+    [Header("Effects")]
+    [SerializeField] private GameObject hitEffectPrefab;
+    #endregion
+
+    #region Components
     public Rigidbody2D rb;
     public Transform player;
     public SpriteRenderer spriteRenderer;
+    #endregion
 
-    [Header("Effects")]
-    [SerializeField] private GameObject hitEffectPrefab;
-
+    #region State
     //상태
     protected int health;
     protected float attackCooldown;
+    #endregion
 
+    #region Properties
     // 접근자 (외부에서 체력 확인용)
     public int CurrentHealth => health;
     public int MaxHealth => data != null ? data.maxHealth : 0;
+    #endregion
 
+    #region Unity Lifecycle
     protected virtual void Awake()
     {
-        rb = GetComponent<Rigidbody2D>();
-        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
-        if (spriteRenderer == null)
-        {
-            // 자식에서도 못 찾았으면 자기 자신에서 찾기
-            spriteRenderer = GetComponent<SpriteRenderer>();
-        }
-        //초기 설정
-        if (data != null)
-        {
-            health = data.maxHealth;
-            if(spriteRenderer != null && data.sprite != null)
-            {
-                spriteRenderer.sprite = data.sprite;
-            }
-        }
+        InitializeComponents();
+        InitializeData();
     }
 
     protected virtual void Start()
     {
-        //플레이어 찾기
-        player = GameObject.FindGameObjectWithTag("Player")?.transform;
-
-        if (player == null)
-        {
-            Debug.LogWarning($"[ENEMY] {data?.enemyName} - Player not found!");
-        }
+        FindPlayer();
     }
 
     protected virtual void Update()
     {
-        if (player == null) return;
+        if (!IsValid()) return;
 
-        if (data == null) return;
+        UpdateCooldown();
+        UpdateBehavior();
+    }
+    #endregion
 
-        //쿨타임 감소
+    #region Initialization
+    /// <summary>
+    /// 컴포넌트 초기화
+    /// </summary>
+    private void InitializeComponents()
+    {
+        rb = GetComponent<Rigidbody2D>();
+        spriteRenderer = GetComponentInChildren<SpriteRenderer>();
+
+        if (spriteRenderer == null)
+        {
+            spriteRenderer = GetComponent<SpriteRenderer>();
+        }
+    }
+
+    /// <summary>
+    /// 데이터 초기화
+    /// </summary>
+    private void InitializeData()
+    {
+        if (data == null)
+        {
+            Debug.LogError($"[ENEMY] {gameObject.name} has no EnemyData!");
+            return;
+        }
+
+        health = data.maxHealth;
+        SetSprite();
+    }
+
+    /// <summary>
+    /// 스프라이트 설정
+    /// </summary>
+    private void SetSprite()
+    {
+        if (spriteRenderer != null && data.sprite != null)
+        {
+            spriteRenderer.sprite = data.sprite;
+        }
+    }
+
+    /// <summary>
+    /// 플레이어 찾기
+    /// </summary>
+    private void FindPlayer()
+    {
+        GameObject playerObj = GameObject.FindGameObjectWithTag(PLAYER_TAG);
+        if (playerObj != null)
+        {
+            player = playerObj.transform;
+        }
+        else
+        {
+            Debug.LogWarning($"[ENEMY] {data?.enemyName} - Player not found!");
+        }
+    }
+    #endregion
+
+    #region Validation
+    /// <summary>
+    /// 유효성 검사
+    /// </summary>
+    private bool IsValid()
+    {
+        return player != null && data != null;
+    }
+    #endregion
+
+    #region Update Logic
+    /// <summary>
+    /// 쿨다운 업데이트
+    /// </summary>
+    private void UpdateCooldown()
+    {
         if (attackCooldown > 0)
         {
             attackCooldown -= Time.deltaTime;
         }
+    }
 
-        //AI 행동
-        float distanceToPlayer = Vector2.Distance(transform.position, player.position);
+    /// <summary>
+    /// 행동 업데이트
+    /// </summary>
+    protected virtual void UpdateBehavior()
+    {
+        float distanceToPlayer = GetDistanceToPlayer();
 
-        if(distanceToPlayer <= data.attackRange)
+        if (IsInAttackRange(distanceToPlayer))
         {
-            //공격 범위 내 - 공격
             Attack();
         }
-        else if(distanceToPlayer <= data.detectionRange)
+        else if (IsInDetectionRange(distanceToPlayer))
         {
-            //감지 범위 내 - 추격
             ChasePlayer();
         }
         else
         {
-            //범위 밖 - 정지
-            rb.velocity = Vector2.zero;
+            StopMovement();
         }
     }
 
+    /// <summary>
+    /// 플레이어와의 거리 계산
+    /// </summary>
+    protected float GetDistanceToPlayer()
+    {
+        return Vector2.Distance(transform.position, player.position);
+    }
+
+    /// <summary>
+    /// 공격 범위 내 확인
+    /// </summary>
+    protected bool IsInAttackRange(float distance)
+    {
+        return distance <= data.attackRange;
+    }
+
+    /// <summary>
+    /// 감지 범위 내 확인
+    /// </summary>
+    protected bool IsInDetectionRange(float distance)
+    {
+        return distance <= data.detectionRange;
+    }
+
+    /// <summary>
+    /// 이동 정지
+    /// </summary>
+    protected void StopMovement()
+    {
+        rb.velocity = Vector2.zero;
+    }
+    #endregion
+
+    #region AI Behavior
     /// <summary>
     /// 플레이어 추격
     /// </summary>
     protected virtual void ChasePlayer()
     {
         if (player == null || rb == null || data == null) return;
-        Vector2 direction = (player.position - transform.position).normalized;
+        Vector2 direction = GetDirectionToPlayer();
         rb.velocity = direction * data.moveSpeed;
     }
-
+    /// <summary>
+    /// 플레이어 방향 계산
+    /// </summary>
+    protected Vector2 GetDirectionToPlayer()
+    {
+        return (player.position - transform.position).normalized;
+    }
     /// <summary>
     /// 공격
     /// </summary>
     protected virtual void Attack()
     {
-        //정지
-        rb.velocity = Vector2.zero;
+        StopMovement();
 
-        if(attackCooldown <= 0)
+        if (CanAttack())
         {
-            attackCooldown = data.attackCooldown;
-
-            //플레이어에게 대미지
-            var playerHealth = player.GetComponent<PlayerHealth>();
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(data.damage);
-            }
-
-            Debug.Log($"{data.enemyName}이(가) 공격");
+            ExecuteAttack();
         }
     }
+    /// <summary>
+    /// 공격 가능 여부
+    /// </summary>
+    protected bool CanAttack()
+    {
+        return attackCooldown <= 0;
+    }
+
+    /// <summary>
+    /// 공격 실행
+    /// </summary>
+    protected virtual void ExecuteAttack()
+    {
+        attackCooldown = data.attackCooldown;
+        DamagePlayer();
+        Debug.Log($"[ENEMY] {data.enemyName}이(가) 공격");
+    }
+    /// <summary>
+    /// 플레이어에게 데미지
+    /// </summary>
+    protected void DamagePlayer()
+    {
+        PlayerHealth playerHealth = player.GetComponent<PlayerHealth>();
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(data.damage);
+        }
+    }
+    #endregion
+
+    #region Damage System
     /// <summary>
     /// 피격
     /// </summary>
     public virtual void TakeDamage(int damage)
     {
-        // ★★★ Null 체크 추가
+        if (!ValidateData())
+        {
+            return;
+        }
+
+        ApplyDamage(damage);
+        SpawnHitEffect();
+        StartCoroutine(HitEffect());
+
+        if (health <= 0)
+        {
+            Die();
+        }
+    }
+    /// <summary>
+    /// 데이터 유효성 검사
+    /// </summary>
+    private bool ValidateData()
+    {
         if (data == null)
         {
             Debug.LogError($"[ENEMY] {gameObject.name} TakeDamage called but data is null!");
             Destroy(gameObject);
-            return;
+            return false;
         }
+        return true;
+    }
 
+    /// <summary>
+    /// 데미지 적용
+    /// </summary>
+    private void ApplyDamage(int damage)
+    {
         health -= damage;
-        Debug.Log($"{data.enemyName} 체력 : {health}/{data.maxHealth}");
-        // ★★★ 파티클 이펙트 추가 ★★★
+        Debug.Log($"[ENEMY] {data.enemyName} 체력: {health}/{data.maxHealth}");
+    }
+
+    /// <summary>
+    /// 피격 이펙트 생성
+    /// </summary>
+    private void SpawnHitEffect()
+    {
         if (hitEffectPrefab != null)
         {
-            GameObject effect = Instantiate(hitEffectPrefab, transform.position, Quaternion.identity);
-            Destroy(effect, 1f);
-        }
-        //피격 이펙트
-        StartCoroutine(HitEffect());
-
-        if(health <= 0)
-        {
-            Die();
+            GameObject effect = Instantiate(
+                hitEffectPrefab,
+                transform.position,
+                Quaternion.identity
+            );
+            Destroy(effect, EFFECT_DESTROY_TIME);
         }
     }
 
@@ -160,56 +321,75 @@ public class Enemy : MonoBehaviour
     {
         if (spriteRenderer != null)
         {
+            Color originalColor = spriteRenderer.color;
             spriteRenderer.color = Color.red;
-            yield return new WaitForSeconds(0.1f);
-            spriteRenderer.color = Color.white;
-        }
-        else
-        {
-            // SpriteRenderer가 없으면 그냥 넘어감
-            yield return null;
+
+            yield return new WaitForSeconds(HIT_EFFECT_DURATION);
+
+            spriteRenderer.color = originalColor;
         }
     }
+    #endregion
 
+    #region Death
     /// <summary>
     /// 사망
     /// </summary>
     protected virtual void Die()
     {
-        Debug.Log($"{data.enemyName} 사망");
-        // ★★★ 적 사망 소리 추가 ★★★
+        Debug.Log($"[ENEMY] {data.enemyName} 사망");
+
+        PlayDeathSound();
+        DropGold();
+        TryDropPassiveItem();
+
+        Destroy(gameObject);
+    }
+    /// <summary>
+    /// 사망 사운드 재생
+    /// </summary>
+    private void PlayDeathSound()
+    {
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlayEnemyDeathSFX();
         }
-        // 골드 드롭
+    }
+
+    /// <summary>
+    /// 골드 드롭
+    /// </summary>
+    private void DropGold()
+    {
         if (PlayerStats.Instance != null && data != null)
         {
             PlayerStats.Instance.AddGold(data.goldDrop);
             Debug.Log($"[ENEMY] Dropped {data.goldDrop} gold");
         }
-        // 패시브 아이템 드롭 (일정 확률)
-        TryDropPassiveItem();
-
-        //오브젝트 제거
-        Destroy(gameObject);
     }
     /// <summary>
     /// 패시브 아이템 드롭 시도
     /// </summary>
     void TryDropPassiveItem()
     {
-        // 탐험가 시너지 효과 적용
-        float dropRateMultiplier = PlayerStats.Instance != null ?
-            PlayerStats.Instance.GetDropRateMultiplier() : 1f;
+        float dropChance = CalculateDropChance();
 
-        float baseDropChance = 0.15f; // 기본 15% 확률
-        float finalDropChance = baseDropChance * dropRateMultiplier;
-
-        if (Random.value < finalDropChance)
+        if (Random.value < dropChance)
         {
             DropRandomPassiveItem();
         }
+    }
+    /// <summary>
+    /// 드롭 확률 계산 (시너지 포함)
+    /// </summary>
+    private float CalculateDropChance()
+    {
+        const float BASE_DROP_CHANCE = 0.15f;
+
+        float dropRateMultiplier = PlayerStats.Instance != null ?
+            PlayerStats.Instance.GetDropRateMultiplier() : 1f;
+
+        return BASE_DROP_CHANCE * dropRateMultiplier;
     }
 
     /// <summary>
@@ -217,53 +397,112 @@ public class Enemy : MonoBehaviour
     /// </summary>
     void DropRandomPassiveItem()
     {
-        // Resources 폴더에서 모든 PassiveItemData 로드
-        PassiveItemData[] allItems = Resources.LoadAll<PassiveItemData>("PassiveItems");
-
-        if (allItems.Length == 0)
+        PassiveItemData[] allItems = LoadPassiveItems(); if (allItems.Length == 0)
         {
             Debug.LogWarning("[ENEMY] No passive items found in Resources/PassiveItems");
             return;
         }
+        PassiveItemData randomItem = SelectRandomItem(allItems);
+        CreateItemDrop(randomItem);
+    }
+    /// <summary>
+    /// 패시브 아이템 로드
+    /// </summary>
+    private PassiveItemData[] LoadPassiveItems()
+    {
+        return Resources.LoadAll<PassiveItemData>("PassiveItems");
+    }
 
-        // 랜덤 선택
-        PassiveItemData randomItem = allItems[Random.Range(0, allItems.Length)];
+    /// <summary>
+    /// 랜덤 아이템 선택
+    /// </summary>
+    private PassiveItemData SelectRandomItem(PassiveItemData[] items)
+    {
+        return items[Random.Range(0, items.Length)];
+    }
 
-        // 드롭 오브젝트 생성
-        GameObject dropObj = new GameObject($"Drop_{randomItem.itemName}");
+    /// <summary>
+    /// 아이템 드롭 생성
+    /// </summary>
+    private void CreateItemDrop(PassiveItemData item)
+    {
+        GameObject dropObj = CreateDropObject(item);
+        AddPickupComponent(dropObj, item);
+        AddVisualComponents(dropObj, item);
+        AddCollider(dropObj);
+
+        Debug.Log($"[ENEMY] Dropped passive item: {item.itemName} ({item.itemType})");
+    }
+
+    /// <summary>
+    /// 드롭 오브젝트 생성
+    /// </summary>
+    private GameObject CreateDropObject(PassiveItemData item)
+    {
+        GameObject dropObj = new GameObject($"Drop_{item.itemName}");
         dropObj.transform.position = transform.position;
         dropObj.layer = LayerMask.NameToLayer("Default");
+        return dropObj;
+    }
 
-        // PickupPassiveItem 컴포넌트 추가
+    /// <summary>
+    /// 픽업 컴포넌트 추가
+    /// </summary>
+    private void AddPickupComponent(GameObject dropObj, PassiveItemData item)
+    {
         PickupPassiveItem pickup = dropObj.AddComponent<PickupPassiveItem>();
-        pickup.passiveItem = randomItem;
+        pickup.passiveItem = item;
+    }
 
-        // 시각적 표현 (SpriteRenderer)
+    /// <summary>
+    /// 시각적 컴포넌트 추가
+    /// </summary>
+    private void AddVisualComponents(GameObject dropObj, PassiveItemData item)
+    {
         SpriteRenderer sr = dropObj.AddComponent<SpriteRenderer>();
-        sr.sprite = randomItem.icon;
+        sr.sprite = item.icon;
         sr.sortingOrder = 10;
         sr.color = new Color(0.8f, 0.5f, 1f); // 보라색 톤
+    }
 
-        // Collider2D 추가
+    /// <summary>
+    /// Collider 추가
+    /// </summary>
+    private void AddCollider(GameObject dropObj)
+    {
         CircleCollider2D col = dropObj.AddComponent<CircleCollider2D>();
         col.isTrigger = true;
         col.radius = 0.5f;
-
-        Debug.Log($"[ENEMY] Dropped passive item: {randomItem.itemName} ({randomItem.itemType})");
     }
+    #endregion
+
+    #region Debug
     //디버그
     protected virtual void OnDrawGizmosSelected()
     {
         if (data == null) return;
-        
-        //감지 범위
+
+        DrawDetectionRange();
+        DrawAttackRange();
+    }
+
+    /// <summary>
+    /// 감지 범위 표시
+    /// </summary>
+    private void DrawDetectionRange()
+    {
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireSphere(transform.position, data.detectionRange);
+    }
 
-        //공격 범위
+    /// <summary>
+    /// 공격 범위 표시
+    /// </summary>
+    private void DrawAttackRange()
+    {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, data.attackRange);
-        
     }
+    #endregion
 }
 
