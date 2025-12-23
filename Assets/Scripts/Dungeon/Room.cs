@@ -7,6 +7,12 @@ using UnityEngine;
 /// </summary>
 public class Room : MonoBehaviour
 {
+    #region Constants
+    private const string PLAYER_TAG = "Player";
+    private const string ENEMY_LAYER = "Enemy";
+    #endregion
+
+    #region Serialized Fields
     [Header("Room Data")]
     [SerializeField] private RoomData roomData;
 
@@ -24,11 +30,6 @@ public class Room : MonoBehaviour
     [SerializeField] private RoomPortal nextPortal;
     [SerializeField] private RoomPortal previousPortal;
 
-    [Header("State")]
-    private bool isCleared = false;
-    private bool isActive = false;
-    private List<GameObject> spawnedEnemies = new List<GameObject>();
-
     [Header("Item Drop")]
     [SerializeField] private GameObject itemDropPrefab;
     [SerializeField] private ItemData[] possibleItems; // 드롭 가능한 아이템들
@@ -36,25 +37,37 @@ public class Room : MonoBehaviour
 
     [Header("Random Event")]
     [SerializeField] private bool isEventRoom = false;
+    #endregion
 
+    #region State
+    [Header("State")]
+    private bool isCleared = false;
+    private bool isActive = false;
+    private List<GameObject> spawnedEnemies = new List<GameObject>();
+    #endregion
+
+    #region Events
     // 이벤트
     public System.Action OnRoomCleared;
+    #endregion
 
+    #region Properties
+    public RoomData RoomData => roomData;
+    public bool IsCleared => isCleared;
+    public bool IsActive => isActive;
+    #endregion
+
+    #region Unity Lifecycle
     void Update()
     {
-        // 방이 활성화되어 있고, 클리어되지 않았다면
-        if (isActive && !isCleared && roomData != null && roomData.hasEnemies)
+        if (ShouldCheckForClear())
         {
-            // 모든 적 제거 확인
-            spawnedEnemies.RemoveAll(enemy => enemy == null);
-
-            if (spawnedEnemies.Count == 0)
-            {
-                ClearRoom();
-            }
+            CheckForClear();
         }
     }
+    #endregion
 
+    #region Activation
     /// <summary>
     /// 방 활성화
     /// </summary>
@@ -67,53 +80,97 @@ public class Room : MonoBehaviour
 
         Debug.Log($"[ROOM] ═══ Activating Room ═══");
 
-        // RoomData 확인
-        if (roomData == null)
+        if (!ValidateRoomData())
         {
-            Debug.LogError($"[ROOM] RoomData is NULL! 프리팹에 RoomData 연결 필요");
             return;
         }
 
-        // 사건방인 경우
         if (isEventRoom)
         {
-            Debug.Log($"[ROOM] Event room: {roomData.roomName}");
-
-            // 랜덤 사건 트리거
-            RandomEventManager eventManager = FindObjectOfType<RandomEventManager>();
-            if (eventManager != null)
-            {
-                eventManager.TriggerRandomEvent();
-            }
-
-            // 사건방은 자동 클리어 (적 없음)
-            isCleared = true;
-            OpenDoors();
-            ActivatePortals();
+            HandleEventRoom();
             return;
         }
 
-        // 시작방이고 적이 없으면
-        if (roomData.roomType == RoomType.Start || !roomData.hasEnemies)
+        if (ShouldAutoClear())
         {
-            Debug.Log($"[ROOM] Room has no enemies - auto cleared!");
-            isCleared = true;
-            OpenDoors();
-            ActivatePortals();
+            AutoClearRoom();
         }
-        // 적 생성
         else if (roomData.hasEnemies && !isCleared)
         {
-            SpawnEnemies();
-            CloseDoors(); // 전투 중엔 문 닫기
-            DeactivatePortals(); // 포탈 비활성화
+            PrepareForCombat();
         }
         else
         {
-            OpenDoors(); // 이미 클리어했으면 문 열기
-            ActivatePortals(); // 포탈 활성화
+            OpenDoors();
+            ActivatePortals();
         }
+    }
+    /// <summary>
+    /// RoomData 유효성 검사
+    /// </summary>
+    private bool ValidateRoomData()
+    {
+        if (roomData == null)
+        {
+            Debug.LogError($"[ROOM] RoomData is NULL! 프리팹에 RoomData 연결 필요");
+            return false;
+        }
+        return true;
+    }
 
+    /// <summary>
+    /// 사건방 처리
+    /// </summary>
+    private void HandleEventRoom()
+    {
+        Debug.Log($"[ROOM] Event room: {roomData.roomName}");
+
+        TriggerRandomEvent();
+
+        isCleared = true;
+        OpenDoors();
+        ActivatePortals();
+    }
+
+    /// <summary>
+    /// 랜덤 사건 트리거
+    /// </summary>
+    private void TriggerRandomEvent()
+    {
+        RandomEventManager eventManager = FindObjectOfType<RandomEventManager>();
+        if (eventManager != null)
+        {
+            eventManager.TriggerRandomEvent();
+        }
+    }
+
+    /// <summary>
+    /// 자동 클리어 여부 확인
+    /// </summary>
+    private bool ShouldAutoClear()
+    {
+        return roomData.roomType == RoomType.Start || !roomData.hasEnemies;
+    }
+
+    /// <summary>
+    /// 자동 클리어
+    /// </summary>
+    private void AutoClearRoom()
+    {
+        Debug.Log($"[ROOM] Room has no enemies - auto cleared!");
+        isCleared = true;
+        OpenDoors();
+        ActivatePortals();
+    }
+
+    /// <summary>
+    /// 전투 준비
+    /// </summary>
+    private void PrepareForCombat()
+    {
+        SpawnEnemies();
+        CloseDoors();
+        DeactivatePortals();
     }
 
     /// <summary>
@@ -122,78 +179,142 @@ public class Room : MonoBehaviour
     public void DeactivateRoom()
     {
         isActive = false;
-        // 방을 완전히 끄지 않고 보이게만 유지
     }
+    #endregion
 
+    #region Enemy Spawning
     /// <summary>
     /// 적 생성
     /// </summary>
     private void SpawnEnemies()
     {
-        if (roomData.enemyPrefabs.Length == 0)
+        if (!ValidateEnemyPrefabs())
         {
-            Debug.LogWarning($"{roomData.roomName}: No enemy prefabs assigned!");
             return;
         }
 
-        int enemyCount = Random.Range(roomData.minEnemies, roomData.maxEnemies + 1);
-
+        int enemyCount = CalculateEnemyCount();
         Debug.Log($"Spawning {enemyCount} enemies in {roomData.roomName}");
 
-        // 스폰 포인트가 있으면 거기에, 없으면 랜덤 위치
-        if (enemySpawnPoints != null && enemySpawnPoints.Length > 0)
-        {
-            for (int i = 0; i < enemyCount && i < enemySpawnPoints.Length; i++)
-            {
-                SpawnEnemyAt(enemySpawnPoints[i].position);
-            }
-        }
-        else
-        {
-            // 랜덤 위치 생성
-            for (int i = 0; i < enemyCount; i++)
-            {
-                Vector3 randomPos = GetRandomPositionInRoom();
-                SpawnEnemyAt(randomPos);
-            }
-        }
+        SpawnEnemiesAtPoints(enemyCount);
 
         Debug.Log($"Spawned {spawnedEnemies.Count} enemies");
     }
+    /// <summary>
+    /// 적 프리팹 유효성 검사
+    /// </summary>
+    private bool ValidateEnemyPrefabs()
+    {
+        if (roomData.enemyPrefabs.Length == 0)
+        {
+            Debug.LogWarning($"{roomData.roomName}: No enemy prefabs assigned!");
+            return false;
+        }
+        return true;
+    }
 
+    /// <summary>
+    /// 생성할 적 수 계산
+    /// </summary>
+    private int CalculateEnemyCount()
+    {
+        return Random.Range(roomData.minEnemies, roomData.maxEnemies + 1);
+    }
+    /// <summary>
+    /// 스폰 포인트에 적 생성
+    /// </summary>
+    private void SpawnEnemiesAtPoints(int enemyCount)
+    {
+        if (HasSpawnPoints())
+        {
+            SpawnAtDesignatedPoints(enemyCount);
+        }
+        else
+        {
+            SpawnAtRandomPositions(enemyCount);
+        }
+    }
+
+    /// <summary>
+    /// 스폰 포인트 존재 여부
+    /// </summary>
+    private bool HasSpawnPoints()
+    {
+        return enemySpawnPoints != null && enemySpawnPoints.Length > 0;
+    }
+
+    /// <summary>
+    /// 지정된 포인트에 생성
+    /// </summary>
+    private void SpawnAtDesignatedPoints(int enemyCount)
+    {
+        for (int i = 0; i < enemyCount && i < enemySpawnPoints.Length; i++)
+        {
+            SpawnEnemyAt(enemySpawnPoints[i].position);
+        }
+    }
+
+    /// <summary>
+    /// 랜덤 위치에 생성
+    /// </summary>
+    private void SpawnAtRandomPositions(int enemyCount)
+    {
+        for (int i = 0; i < enemyCount; i++)
+        {
+            Vector3 randomPos = GetRandomPositionInRoom();
+            SpawnEnemyAt(randomPos);
+        }
+    }
     /// <summary>
     /// 특정 위치에 적 생성
     /// </summary>
     private void SpawnEnemyAt(Vector3 position)
     {
-        GameObject enemyPrefab = roomData.enemyPrefabs[Random.Range(0, roomData.enemyPrefabs.Length)];
+        GameObject enemyPrefab = SelectRandomEnemyPrefab();
 
-        // ★★★ 프리팹 검증
-        if (enemyPrefab == null)
+        if (!ValidateEnemyPrefab(enemyPrefab))
         {
-            Debug.LogError($"[ROOM] Enemy prefab is null in {roomData.roomName}!");
             return;
         }
 
-        // ★★★ Enemy 컴포넌트 확인
+        GameObject enemy = Instantiate(enemyPrefab, position, Quaternion.identity);
+        enemy.transform.SetParent(transform);
+        spawnedEnemies.Add(enemy);
+    }
+    /// <summary>
+    /// 랜덤 적 프리팹 선택
+    /// </summary>
+    private GameObject SelectRandomEnemyPrefab()
+    {
+        return roomData.enemyPrefabs[Random.Range(0, roomData.enemyPrefabs.Length)];
+    }
+
+    /// <summary>
+    /// 적 프리팹 유효성 검사
+    /// </summary>
+    private bool ValidateEnemyPrefab(GameObject enemyPrefab)
+    {
+        if (enemyPrefab == null)
+        {
+            Debug.LogError($"[ROOM] Enemy prefab is null in {roomData.roomName}!");
+            return false;
+        }
+
         Enemy enemyComponent = enemyPrefab.GetComponent<Enemy>();
         if (enemyComponent == null)
         {
             Debug.LogError($"[ROOM] Prefab {enemyPrefab.name} has no Enemy component!");
-            return;
+            return false;
         }
 
-        // ★★★ EnemyData 확인
         if (enemyComponent.data == null)
         {
             Debug.LogError($"[ROOM] Prefab {enemyPrefab.name} has no EnemyData assigned!");
-            return;
+            return false;
         }
-        GameObject enemy = Instantiate(enemyPrefab, position, Quaternion.identity);
-        enemy.transform.SetParent(transform); // 방의 자식으로
-        spawnedEnemies.Add(enemy);
-    }
 
+        return true;
+    }
     /// <summary>
     /// 방 내 랜덤 위치
     /// </summary>
@@ -204,6 +325,45 @@ public class Room : MonoBehaviour
         float offsetY = Random.Range(-roomData.roomSize.y / 3f, roomData.roomSize.y / 3f);
 
         return transform.position + new Vector3(offsetX, offsetY, 0);
+    }
+    #endregion
+
+    #region Room Clearing
+    /// <summary>
+    /// 클리어 확인 필요 여부
+    /// </summary>
+    private bool ShouldCheckForClear()
+    {
+        return isActive && !isCleared && roomData != null && roomData.hasEnemies;
+    }
+
+    /// <summary>
+    /// 클리어 확인
+    /// </summary>
+    private void CheckForClear()
+    {
+        CleanupDeadEnemies();
+
+        if (AllEnemiesDefeated())
+        {
+            ClearRoom();
+        }
+    }
+
+    /// <summary>
+    /// 죽은 적 정리
+    /// </summary>
+    private void CleanupDeadEnemies()
+    {
+        spawnedEnemies.RemoveAll(enemy => enemy == null);
+    }
+
+    /// <summary>
+    /// 모든 적 처치 여부
+    /// </summary>
+    private bool AllEnemiesDefeated()
+    {
+        return spawnedEnemies.Count == 0;
     }
 
     /// <summary>
@@ -216,26 +376,27 @@ public class Room : MonoBehaviour
         isCleared = true;
 
         Debug.Log($"[ROOM] ✓ Room Cleared: {roomData.roomName}");
-        // ★★★ 문 열리는 소리 추가 ★★★
+
+        PlayDoorOpenSound();
+        OpenDoors();
+        ActivatePortals();
+        GiveRewards();
+        DropRandomItem();
+
+        OnRoomCleared?.Invoke();
+    }
+
+    /// <summary>
+    /// 문 열리는 소리 재생
+    /// </summary>
+    private void PlayDoorOpenSound()
+    {
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlayDoorOpenSFX();
         }
-        // 문 열기
-        OpenDoors();
-
-        // 포탈 활성화
-        ActivatePortals();
-
-        // 골드 보상
-        if (PlayerStats.Instance != null)
-        {
-            PlayerStats.Instance.AddGold(roomData.goldReward);
-        }
-
-        // ★★★ 아이템 드롭 추가 ★★★
-        DropRandomItem();
     }
+
     /// <summary>
     /// 보상 지급
     /// </summary>
@@ -254,15 +415,18 @@ public class Room : MonoBehaviour
             }
         }
     }
+    #endregion
+
+    #region Door Management
     /// <summary>
     /// 문 열기
     /// </summary>
     private void OpenDoors()
     {
-        if (northDoor != null && roomData.hasNorthDoor) northDoor.SetActive(false);
-        if (southDoor != null && roomData.hasSouthDoor) southDoor.SetActive(false);
-        if (eastDoor != null && roomData.hasEastDoor) eastDoor.SetActive(false);
-        if (westDoor != null && roomData.hasWestDoor) westDoor.SetActive(false);
+        SetDoorState(northDoor, roomData.hasNorthDoor, false);
+        SetDoorState(southDoor, roomData.hasSouthDoor, false);
+        SetDoorState(eastDoor, roomData.hasEastDoor, false);
+        SetDoorState(westDoor, roomData.hasWestDoor, false);
     }
 
     /// <summary>
@@ -270,40 +434,34 @@ public class Room : MonoBehaviour
     /// </summary>
     private void CloseDoors()
     {
-        if (northDoor != null && roomData.hasNorthDoor) northDoor.SetActive(true);
-        if (southDoor != null && roomData.hasSouthDoor) southDoor.SetActive(true);
-        if (eastDoor != null && roomData.hasEastDoor) eastDoor.SetActive(true);
-        if (westDoor != null && roomData.hasWestDoor) westDoor.SetActive(true);
+        SetDoorState(northDoor, roomData.hasNorthDoor, true);
+        SetDoorState(southDoor, roomData.hasSouthDoor, true);
+        SetDoorState(eastDoor, roomData.hasEastDoor, true);
+        SetDoorState(westDoor, roomData.hasWestDoor, true);
     }
 
+    /// <summary>
+    /// 문 상태 설정
+    /// </summary>
+    private void SetDoorState(GameObject door, bool hasDoor, bool active)
+    {
+        if (door != null && hasDoor)
+        {
+            door.SetActive(active);
+        }
+    }
+    #endregion
+
+    #region Portal Management
     /// <summary>
     /// 포탈 활성화
     /// </summary>
     private void ActivatePortals()
     {
         Debug.Log($"[ROOM] ActivatePortals called for {roomData.roomName}");
-        Debug.Log($"[ROOM] nextPortal is null? {nextPortal == null}");
-        Debug.Log($"[ROOM] previousPortal is null? {previousPortal == null}");
 
-        if (nextPortal != null)
-        {
-            nextPortal.SetActive(true);
-            Debug.Log("→ Next portal activated!");
-        }
-        else
-        {
-            Debug.LogError($"[ROOM] Next portal is NULL in {roomData.roomName}! Inspector에서 연결 필요");
-        }
-
-        if (previousPortal != null)
-        {
-            previousPortal.SetActive(true);
-            Debug.Log("← Previous portal activated!");
-        }
-        else
-        {
-            Debug.LogWarning($"[ROOM] Previous portal is NULL (시작방이면 정상)");
-        }
+        SetPortalState(nextPortal, "Next", true);
+        SetPortalState(previousPortal, "Previous", true);
     }
 
     /// <summary>
@@ -311,73 +469,96 @@ public class Room : MonoBehaviour
     /// </summary>
     private void DeactivatePortals()
     {
-        if (nextPortal != null) nextPortal.SetActive(false);
-        if (previousPortal != null) previousPortal.SetActive(false);
+        SetPortalState(nextPortal, "Next", false);
+        SetPortalState(previousPortal, "Previous", false);
     }
-
     /// <summary>
-    /// 플레이어 스폰 위치
+    /// 포탈 상태 설정
     /// </summary>
-    public Vector3 GetPlayerSpawnPosition()
+    private void SetPortalState(RoomPortal portal, string portalName, bool active)
     {
-        if (playerSpawnPoint != null)
+        if (portal != null)
         {
-            return playerSpawnPoint.position;
+            portal.SetActive(active);
+            Debug.Log($"→ {portalName} portal {(active ? "activated" : "deactivated")}!");
         }
-        return transform.position;
+        else
+        {
+            if (active)
+            {
+                Debug.LogWarning($"[ROOM] {portalName} portal is NULL");
+            }
+        }
     }
+    #endregion
 
-    // Getters
-    public RoomData RoomData => roomData;
-    public bool IsCleared => isCleared;
-    public bool IsActive => isActive;
-
+    #region Item Dropping
     /// <summary>
-    /// 방 클리어 시 아이템 드롭
+    /// 랜덤 아이템 드롭
     /// </summary>
     void DropRandomItem()
     {
-        // 확률 체크
-        if (Random.value > itemDropChance)
+        if (!ShouldDropItem())
         {
             Debug.Log("[ROOM] No item dropped");
             return;
         }
 
+        if (!ValidateItemDropSettings())
+        {
+            return;
+        }
+
+        ItemData selectedItem = SelectRandomItem();
+        if (selectedItem != null)
+        {
+            CreateItemDrop(selectedItem);
+        }
+    }
+
+    /// <summary>
+    /// 아이템 드롭 여부 결정
+    /// </summary>
+    private bool ShouldDropItem()
+    {
+        return Random.value <= itemDropChance;
+    }
+
+    /// <summary>
+    /// 아이템 드롭 설정 유효성 검사
+    /// </summary>
+    private bool ValidateItemDropSettings()
+    {
         if (possibleItems == null || possibleItems.Length == 0)
         {
             Debug.LogWarning("[ROOM] No possible items configured");
-            return;
+            return false;
         }
 
         if (itemDropPrefab == null)
         {
             Debug.LogError("[ROOM] Item drop prefab not assigned");
-            return;
+            return false;
         }
 
-        // 랜덤 아이템 선택 (가중치 고려)
-        ItemData selectedItem = SelectRandomItem();
-
-        if (selectedItem == null) return;
-
-        // 아이템 드롭
-        Vector3 dropPosition = transform.position; // 방 중앙
-        GameObject itemObj = Instantiate(itemDropPrefab, dropPosition, Quaternion.identity);
-
-        ItemDrop drop = itemObj.GetComponent<ItemDrop>();
-        if (drop != null)
-        {
-            drop.Initialize(selectedItem);
-        }
-
-        Debug.Log($"[ROOM] Dropped item: {selectedItem.itemName}");
+        return true;
     }
 
     /// <summary>
-    /// 가중치를 고려한 랜덤 아이템 선택
+    /// 가중치 기반 랜덤 아이템 선택
     /// </summary>
     ItemData SelectRandomItem()
+    {
+        float totalWeight = CalculateTotalWeight();
+        float randomValue = Random.Range(0f, totalWeight);
+
+        return SelectItemByWeight(randomValue);
+    }
+
+    /// <summary>
+    /// 총 가중치 계산
+    /// </summary>
+    private float CalculateTotalWeight()
     {
         float totalWeight = 0f;
         foreach (var item in possibleItems)
@@ -387,8 +568,14 @@ public class Room : MonoBehaviour
                 totalWeight += item.dropChance;
             }
         }
+        return totalWeight;
+    }
 
-        float randomValue = Random.Range(0f, totalWeight);
+    /// <summary>
+    /// 가중치로 아이템 선택
+    /// </summary>
+    private ItemData SelectItemByWeight(float randomValue)
+    {
         float currentWeight = 0f;
 
         foreach (var item in possibleItems)
@@ -403,6 +590,46 @@ public class Room : MonoBehaviour
             }
         }
 
-        return possibleItems[0]; // 폴백
+        return possibleItems[0];
     }
+
+    /// <summary>
+    /// 아이템 드롭 생성
+    /// </summary>
+    private void CreateItemDrop(ItemData item)
+    {
+        Vector3 dropPosition = transform.position;
+        GameObject itemObj = Instantiate(itemDropPrefab, dropPosition, Quaternion.identity);
+
+        InitializeItemDrop(itemObj, item);
+
+        Debug.Log($"[ROOM] Dropped item: {item.itemName}");
+    }
+
+    /// <summary>
+    /// 아이템 드롭 초기화
+    /// </summary>
+    private void InitializeItemDrop(GameObject itemObj, ItemData item)
+    {
+        ItemDrop drop = itemObj.GetComponent<ItemDrop>();
+        if (drop != null)
+        {
+            drop.Initialize(item);
+        }
+    }
+    #endregion
+
+    #region Helper Methods
+    /// <summary>
+    /// 플레이어 스폰 위치
+    /// </summary>
+    public Vector3 GetPlayerSpawnPosition()
+    {
+        if (playerSpawnPoint != null)
+        {
+            return playerSpawnPoint.position;
+        }
+        return transform.position;
+    }
+    #endregion
 }
