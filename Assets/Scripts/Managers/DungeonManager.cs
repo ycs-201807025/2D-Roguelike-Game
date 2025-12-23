@@ -8,6 +8,12 @@ using System.Collections.Generic;
 /// </summary>
 public class DungeonManager : MonoBehaviour
 {
+    #region Constants
+    private const int BOSS_ROOM_INTERVAL = 5;
+    private const int EVENT_ROOM_INTERVAL = 3;
+    #endregion
+
+    #region Serialized Fields
     [Header("Room Prefabs")]
     [SerializeField] private GameObject startRoomPrefab;
     [SerializeField] private GameObject[] normalRoomPrefabs;
@@ -23,22 +29,48 @@ public class DungeonManager : MonoBehaviour
 
     [Header("Camera")]
     [SerializeField] private CameraRoomBounds cameraRoomBounds;
+    #endregion
 
+    #region State
     private List<Room> rooms = new List<Room>();
     private int currentRoomIndex = 0;
+    #endregion
 
+    #region Properties
+    public Room CurrentRoom => currentRoomIndex >= 0 && currentRoomIndex < rooms.Count ? rooms[currentRoomIndex] : null;
+    public int CurrentRoomIndex => currentRoomIndex;
+    public int TotalRooms => rooms.Count;
+    #endregion
+
+    #region Unity Lifecycle
     void Start()
     {
         Debug.Log("=== DUNGEON MANAGER START ===");
-        // ★★★ 던전 BGM 재생 ★★★
+
+        PlayDungeonBGM();
+        GenerateDungeon();
+        StartDungeon();
+    }
+    void Update()
+    {
+        HandleDebugInput();
+    }
+    #endregion
+
+    #region Initialization
+    /// <summary>
+    /// BGM 재생
+    /// </summary>
+    private void PlayDungeonBGM()
+    {
         if (SoundManager.Instance != null)
         {
             SoundManager.Instance.PlayDungeonBGM();
         }
-        GenerateDungeon();
-        StartDungeon();
     }
+    #endregion
 
+    #region Dungeon Generation
     /// <summary>
     /// 던전 생성 (간단한 선형 구조)
     /// </summary>
@@ -47,125 +79,230 @@ public class DungeonManager : MonoBehaviour
         Debug.Log($"Generating dungeon with {roomCount} rooms...");
 
         rooms.Clear();
-
-        // 시작방
-        CreateRoom(startRoomPrefab, 0, "Start");
-
-        // 일반 방들 (선형으로 배치)
-        for (int i = 1; i < roomCount; i++)
-        {
-            GameObject roomPrefab = null;
-            string roomTypeLabel = "";
-
-            // 5층마다 보스방
-            if ((i + 1) % 5 == 0 && bossRoomPrefabs != null && bossRoomPrefabs.Length > 0)
-            {
-                roomPrefab = bossRoomPrefabs[Random.Range(0, bossRoomPrefabs.Length)];
-                roomTypeLabel = "Boss";
-                Debug.Log($"  → Floor {i + 1}: Boss Room");
-
-                // ★★★ 보스방 프리팹 검증
-                if (roomPrefab != null)
-                {
-                    Room room = roomPrefab.GetComponent<Room>();
-                    if (room == null)
-                    {
-                        Debug.LogError($"[DUNGEON] Boss room prefab has no Room component!");
-                        continue;
-                    }
-
-                    if (room.RoomData == null)
-                    {
-                        Debug.LogError($"[DUNGEON] Boss room has no RoomData!");
-                        continue;
-                    }
-
-                    Debug.Log($"[DUNGEON] Boss room validated: {room.RoomData.roomName}");
-                }
-            }
-            // 3층마다 사건방 (보스방 아닌 경우)
-            else if (i % 3 == 0 && eventRoomPrefabs != null && eventRoomPrefabs.Length > 0)
-            {
-                roomPrefab = eventRoomPrefabs[Random.Range(0, eventRoomPrefabs.Length)];
-                roomTypeLabel = "Event";
-                Debug.Log($"  → Floor {i + 1}: Event Room");
-            }
-            // 나머지는 일반 전투방
-            else
-            {
-                if (normalRoomPrefabs == null || normalRoomPrefabs.Length == 0)
-                {
-                    Debug.LogError("[DUNGEON MANAGER] No normal room prefabs assigned!");
-                    continue;
-                }
-                roomPrefab = normalRoomPrefabs[Random.Range(0, normalRoomPrefabs.Length)];
-                roomTypeLabel = "Normal";
-            }
-
-            if (roomPrefab != null)
-            {
-                CreateRoom(roomPrefab, i, roomTypeLabel);
-            }
-        }
-
-        // 모든 방 비활성화
-        foreach (Room room in rooms)
-        {
-            room.gameObject.SetActive(false);
-        }
+        CreateStartRoom();
+        CreateNormalRooms();
+        DeactivateAllRooms();
 
         Debug.Log($"=== Dungeon generated: {rooms.Count} rooms ===");
     }
 
-    
     /// <summary>
-    /// 방 생성 헬퍼 메서드
+    /// 시작방 생성
+    /// </summary>
+    private void CreateStartRoom()
+    {
+        CreateRoom(startRoomPrefab, 0, "Start");
+    }
+
+    /// <summary>
+    /// 일반 방들 생성
+    /// </summary>
+    private void CreateNormalRooms()
+    {
+        for (int i = 1; i < roomCount; i++)
+        {
+            RoomType roomType = DetermineRoomType(i);
+            GameObject roomPrefab = SelectRoomPrefab(roomType);
+
+            if (roomPrefab != null)
+            {
+                CreateRoom(roomPrefab, i, roomType.ToString());
+            }
+        }
+    }
+
+    /// <summary>
+    /// 방 타입 결정
+    /// </summary>
+    private RoomType DetermineRoomType(int index)
+    {
+        int floor = index + 1;
+
+        if (IsBossFloor(floor))
+        {
+            return RoomType.Boss;
+        }
+        else if (IsEventFloor(index))
+        {
+            return RoomType.Event;
+        }
+        else
+        {
+            return RoomType.Normal;
+        }
+    }
+
+    /// <summary>
+    /// 보스 층 확인
+    /// </summary>
+    private bool IsBossFloor(int floor)
+    {
+        return floor % BOSS_ROOM_INTERVAL == 0 &&
+               bossRoomPrefabs != null &&
+               bossRoomPrefabs.Length > 0;
+    }
+
+    /// <summary>
+    /// 사건방 층 확인
+    /// </summary>
+    private bool IsEventFloor(int index)
+    {
+        return index % EVENT_ROOM_INTERVAL == 0 &&
+               eventRoomPrefabs != null &&
+               eventRoomPrefabs.Length > 0;
+    }
+
+    /// <summary>
+    /// 방 프리팹 선택
+    /// </summary>
+    private GameObject SelectRoomPrefab(RoomType roomType)
+    {
+        switch (roomType)
+        {
+            case RoomType.Boss:
+                return SelectRandomPrefab(bossRoomPrefabs);
+
+            case RoomType.Event:
+                return SelectRandomPrefab(eventRoomPrefabs);
+
+            case RoomType.Normal:
+                return SelectRandomPrefab(normalRoomPrefabs);
+
+            default:
+                Debug.LogError($"[DUNGEON MANAGER] Unknown room type: {roomType}");
+                return null;
+        }
+    }
+
+    /// <summary>
+    /// 랜덤 프리팹 선택
+    /// </summary>
+    private GameObject SelectRandomPrefab(GameObject[] prefabs)
+    {
+        if (prefabs == null || prefabs.Length == 0)
+        {
+            return null;
+        }
+
+        return prefabs[Random.Range(0, prefabs.Length)];
+    }
+
+    /// <summary>
+    /// 방 생성
     /// </summary>
     private void CreateRoom(GameObject roomPrefab, int index, string typeLabel)
+    {
+        if (!ValidateRoomPrefab(roomPrefab, index))
+        {
+            return;
+        }
+
+        Vector3 position = CalculateRoomPosition(index);
+        GameObject roomObj = InstantiateRoom(roomPrefab, position);
+        ConfigureRoom(roomObj, index, typeLabel);
+
+        Room room = roomObj.GetComponent<Room>();
+        if (room != null)
+        {
+            rooms.Add(room);
+            Debug.Log($"[DUNGEON MANAGER] ✓ Room {index} ({typeLabel}) created at {position}");
+        }
+    }
+
+    /// <summary>
+    /// 방 프리팹 유효성 검사
+    /// </summary>
+    private bool ValidateRoomPrefab(GameObject roomPrefab, int index)
     {
         if (roomPrefab == null)
         {
             Debug.LogError($"[DUNGEON MANAGER] Room prefab is null at index {index}!");
-            return;
+            return false;
         }
 
-        // 위치 계산 (오른쪽으로 배치)
-        Vector3 position = new Vector3(index * roomSpacing, 0, 0);
-
-        // 방 생성
-        GameObject roomObj = Instantiate(roomPrefab, position, Quaternion.identity);
-        roomObj.transform.SetParent(transform);
-
-        // 이름 설정
-        string roomName = index == 0 ? "Room_0_Start" : $"Room_{index}_{typeLabel}";
-        roomObj.name = roomName;
-
-        // Room 컴포넌트 확인
-        Room room = roomObj.GetComponent<Room>();
+        Room room = roomPrefab.GetComponent<Room>();
         if (room == null)
         {
             Debug.LogError($"[DUNGEON MANAGER] Room prefab {roomPrefab.name} doesn't have Room component!");
-            Destroy(roomObj);
-            return;
+            return false;
         }
 
-        rooms.Add(room);
-        Debug.Log($"[DUNGEON MANAGER] ✓ Room {index} ({typeLabel}) created at {position}");
+        return true;
     }
+
+    /// <summary>
+    /// 방 위치 계산
+    /// </summary>
+    private Vector3 CalculateRoomPosition(int index)
+    {
+        return new Vector3(index * roomSpacing, 0, 0);
+    }
+
+    /// <summary>
+    /// 방 인스턴스화
+    /// </summary>
+    private GameObject InstantiateRoom(GameObject roomPrefab, Vector3 position)
+    {
+        GameObject roomObj = Instantiate(roomPrefab, position, Quaternion.identity);
+        roomObj.transform.SetParent(transform);
+        return roomObj;
+    }
+
+    /// <summary>
+    /// 방 설정
+    /// </summary>
+    private void ConfigureRoom(GameObject roomObj, int index, string typeLabel)
+    {
+        string roomName = index == 0 ? "Room_0_Start" : $"Room_{index}_{typeLabel}";
+        roomObj.name = roomName;
+    }
+
+    /// <summary>
+    /// 모든 방 비활성화
+    /// </summary>
+    private void DeactivateAllRooms()
+    {
+        foreach (Room room in rooms)
+        {
+            room.gameObject.SetActive(false);
+        }
+    }
+    #endregion
+
+    #region Dungeon Progression
     /// <summary>
     /// 던전 시작
     /// </summary>
     private void StartDungeon()
     {
-        if (rooms.Count == 0)
+        if (!ValidateDungeon())
         {
-            Debug.LogError("No rooms in dungeon!");
             return;
         }
 
         Debug.Log("Starting dungeon...");
 
-        // 플레이어 찾기
+        FindPlayer();
+        EnterRoom(0);
+    }
+    /// <summary>
+    /// 던전 유효성 검사
+    /// </summary>
+    private bool ValidateDungeon()
+    {
+        if (rooms.Count == 0)
+        {
+            Debug.LogError("No rooms in dungeon!");
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 플레이어 찾기
+    /// </summary>
+    private void FindPlayer()
+    {
         if (player == null)
         {
             player = GameObject.FindGameObjectWithTag("Player");
@@ -175,64 +312,106 @@ public class DungeonManager : MonoBehaviour
         {
             Debug.LogError("Player not found!");
         }
-
-        // 첫 방 활성화
-        currentRoomIndex = 0;
-        EnterRoom(0);
     }
+
     /// <summary>
     /// 방 입장
     /// </summary>
     public void EnterRoom(int roomIndex)
     {
-        if (roomIndex < 0 || roomIndex >= rooms.Count)
+        if (!ValidateRoomIndex(roomIndex))
         {
-            Debug.LogError($"Invalid room index: {roomIndex}");
             return;
         }
 
-        
-        // 이전 방 비활성화
+        DeactivateCurrentRoom();
+        ActivateNewRoom(roomIndex);
+        MovePlayerToRoom();
+        UpdateCamera();
+        SubscribeToRoomEvents();
+        HandleBossBGM();
+
+        Debug.Log($"\n>>> Entering Room {roomIndex} <<<");
+        Debug.Log($"Current Room: {CurrentRoom.RoomData.roomName}");
+    }
+    /// <summary>
+    /// 방 인덱스 유효성 검사
+    /// </summary>
+    private bool ValidateRoomIndex(int roomIndex)
+    {
+        if (roomIndex < 0 || roomIndex >= rooms.Count)
+        {
+            Debug.LogError($"Invalid room index: {roomIndex}");
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 현재 방 비활성화
+    /// </summary>
+    private void DeactivateCurrentRoom()
+    {
         if (currentRoomIndex >= 0 && currentRoomIndex < rooms.Count)
         {
             rooms[currentRoomIndex].DeactivateRoom();
         }
+    }
 
-        // 새 방 활성화
+    /// <summary>
+    /// 새 방 활성화
+    /// </summary>
+    private void ActivateNewRoom(int roomIndex)
+    {
         currentRoomIndex = roomIndex;
+        CurrentRoom.ActivateRoom();
+    }
 
-        Debug.Log($"\n>>> Entering Room {roomIndex} <<<");
-        // ★★★ 보스방이면 BGM 변경 ★★★
-        Room currentRoom = rooms[currentRoomIndex];
-        if (currentRoom.RoomData != null &&
-            currentRoom.RoomData.roomType == RoomType.Boss &&
+    /// <summary>
+    /// 플레이어 이동
+    /// </summary>
+    private void MovePlayerToRoom()
+    {
+        if (player != null)
+        {
+            Vector3 spawnPos = CurrentRoom.GetPlayerSpawnPosition();
+            player.transform.position = spawnPos;
+            Debug.Log($"Player moved to {spawnPos}");
+        }
+    }
+
+    /// <summary>
+    /// 카메라 업데이트
+    /// </summary>
+    private void UpdateCamera()
+    {
+        if (cameraRoomBounds != null)
+        {
+            cameraRoomBounds.SetCurrentRoom(CurrentRoom);
+        }
+    }
+
+    /// <summary>
+    /// 방 이벤트 구독
+    /// </summary>
+    private void SubscribeToRoomEvents()
+    {
+        CurrentRoom.OnRoomCleared -= OnCurrentRoomCleared;
+        CurrentRoom.OnRoomCleared += OnCurrentRoomCleared;
+    }
+
+    /// <summary>
+    /// 보스방 BGM 처리
+    /// </summary>
+    private void HandleBossBGM()
+    {
+        if (CurrentRoom.RoomData != null &&
+            CurrentRoom.RoomData.roomType == RoomType.Boss &&
             SoundManager.Instance != null)
         {
             SoundManager.Instance.PlayBossBGM();
         }
-        currentRoom.ActivateRoom();
-
-        // 플레이어 이동
-        if (player != null)
-        {
-            Vector3 spawnPos = currentRoom.GetPlayerSpawnPosition();
-            player.transform.position = spawnPos;
-            Debug.Log($"Player moved to {spawnPos}");
-        }
-
-        // 카메라 경계 설정
-        if (cameraRoomBounds != null)
-        {
-            cameraRoomBounds.SetCurrentRoom(currentRoom);
-        }
-
-        // 방 클리어 이벤트 구독
-        currentRoom.OnRoomCleared -= OnCurrentRoomCleared; // 기존 구독 제거
-        currentRoom.OnRoomCleared += OnCurrentRoomCleared; // 새로 구독
-
-        Debug.Log($"Current Room: {currentRoom.RoomData.roomName}");
     }
-
     /// <summary>
     /// 현재 방 클리어 시
     /// </summary>
@@ -247,11 +426,16 @@ public class DungeonManager : MonoBehaviour
         }
         else
         {
-            Debug.Log("★★★ DUNGEON COMPLETED! ★★★");
             OnDungeonCompleted();
         }
     }
-
+    /// <summary>
+    /// 다음 방 존재 여부
+    /// </summary>
+    private bool HasNextRoom()
+    {
+        return currentRoomIndex < rooms.Count - 1;
+    }
     /// <summary>
     /// 다음 방으로 이동
     /// </summary>
@@ -259,21 +443,19 @@ public class DungeonManager : MonoBehaviour
     {
         Debug.Log("[MANAGER] MoveToNextRoom called");
 
-        if (currentRoomIndex < rooms.Count - 1)
+        if (!HasNextRoom())
         {
-            // 현재 방이 클리어되었는지 확인
-            if (rooms[currentRoomIndex].IsCleared)
-            {
-                EnterRoom(currentRoomIndex + 1);
-            }
-            else
-            {
-                Debug.LogWarning("현재 방을 먼저 클리어하세요!");
-            }
+            Debug.Log("마지막 방입니다!");
+            return;
+        }
+
+        if (CurrentRoom.IsCleared)
+        {
+            EnterRoom(currentRoomIndex + 1);
         }
         else
         {
-            Debug.Log("마지막 방입니다!");
+            Debug.LogWarning("현재 방을 먼저 클리어하세요!");
         }
     }
 
@@ -300,34 +482,57 @@ public class DungeonManager : MonoBehaviour
     private void OnDungeonCompleted()
     {
         Debug.Log("=== DUNGEON CLEARED! ===");
-        // 보상 지급
+        Debug.Log("★★★ DUNGEON COMPLETED! ★★★");
+
+        GiveCompletionReward();
+    }
+    /// <summary>
+    /// 완료 보상 지급
+    /// </summary>
+    private void GiveCompletionReward()
+    {
+        const int COMPLETION_GOLD = 500;
+
         if (PlayerStats.Instance != null)
         {
-            PlayerStats.Instance.AddGold(500); // 던전 클리어 보상
-            Debug.Log("[DUNGEON MANAGER] Completion reward: 500 gold");
+            PlayerStats.Instance.AddGold(COMPLETION_GOLD);
+            Debug.Log($"[DUNGEON MANAGER] Completion reward: {COMPLETION_GOLD} gold");
         }
     }
+    #endregion
 
-    // 임시: 키보드로 방 이동 테스트
-    void Update()
+    #region Helper Methods
+    /// <summary>
+    /// 특정 인덱스의 방 가져오기
+    /// </summary>
+    private Room GetRoomAtIndex(int index)
     {
-        // N키: 다음 방
+        if (index >= 0 && index < rooms.Count)
+        {
+            return rooms[index];
+        }
+        return null;
+    }
+    #endregion
+
+    #region Debug Input
+    /// <summary>
+    /// 디버그 입력 처리
+    /// </summary>
+    private void HandleDebugInput()
+    {
         if (Input.GetKeyDown(KeyCode.N))
         {
             Debug.Log("[INPUT] N key pressed");
             MoveToNextRoom();
         }
 
-        // B키: 이전 방
         if (Input.GetKeyDown(KeyCode.B))
         {
             Debug.Log("[INPUT] B key pressed");
             MoveToPreviousRoom();
         }
     }
+    #endregion
 
-    // Getters
-    public Room CurrentRoom => currentRoomIndex >= 0 && currentRoomIndex < rooms.Count ? rooms[currentRoomIndex] : null;
-    public int CurrentRoomIndex => currentRoomIndex;
-    public int TotalRooms => rooms.Count;
 }
