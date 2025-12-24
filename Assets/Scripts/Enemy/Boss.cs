@@ -7,16 +7,31 @@ using UnityEngine;
 /// </summary>
 public class Boss : Enemy
 {
+    #region Constants
+    private const float DEFAULT_PHASE2_THRESHOLD = 0.5f;
+    private const float PHASE2_SPEED_MULTIPLIER = 1.5f;
+    private const float PATTERN_COOLDOWN = 2f;
+    private const int PATTERN_COUNT = 3;
+    private const float CHARGE_WARNING_DURATION = 0.5f;
+    private const float CHARGE_DURATION = 1f;
+    private const float CHARGE_SPEED_MULTIPLIER = 3f;
+    #endregion
+
+    #region Serialized Fields
     [Header("Boss Patterns")]
     [SerializeField] private float phase2HealthPercent = 0.5f; // 50% 이하 시 페이즈 2
     [SerializeField] private GameObject projectilePrefab;
     [SerializeField] private int projectileCount = 3; // 투사체 개수
     [SerializeField] private float projectileSpeed = 8f;
+    #endregion
 
+    #region State
     private bool isPhase2 = false;
     private float patternCooldown = 0f;
     private int currentPattern = 0;
-    
+    #endregion
+
+    #region Unity Lifecycle
     protected override void Awake()
     {
         base.Awake(); // 부모(Enemy)의 Awake 호출
@@ -24,29 +39,63 @@ public class Boss : Enemy
     }
     protected override void Update()
     {
-        if(data == null) return;
-        if (player == null)
+        if (!ValidateData())
         {
-            // 플레이어 다시 찾기 시도
-            player = GameObject.FindGameObjectWithTag("Player")?.transform;
-            if (player == null)
-            {
-                return; // 플레이어 없으면 그냥 리턴
-            }
+            return;
         }
+
+        if (!ValidatePlayer())
+        {
+            return;
+        }
+
         base.Update();
 
-        // 페이즈 2 진입 체크
-        if (!isPhase2 && health <= data.maxHealth * phase2HealthPercent)
+        CheckPhaseTransition();
+        UpdatePatternCooldown();
+    }
+    #endregion
+
+    #region Validation
+    /// <summary>
+    /// 데이터 유효성 검사
+    /// </summary>
+    private bool ValidateData()
+    {
+        return data != null;
+    }
+
+    /// <summary>
+    /// 플레이어 유효성 검사
+    /// </summary>
+    private bool ValidatePlayer()
+    {
+        if (player == null)
+        {
+            player = GameObject.FindGameObjectWithTag("Player")?.transform;
+        }
+        return player != null;
+    }
+    #endregion
+
+    #region Phase Management
+    /// <summary>
+    /// 페이즈 전환 확인
+    /// </summary>
+    private void CheckPhaseTransition()
+    {
+        if (ShouldEnterPhase2())
         {
             EnterPhase2();
         }
+    }
 
-        // 패턴 쿨다운
-        if (patternCooldown > 0)
-        {
-            patternCooldown -= Time.deltaTime;
-        }
+    /// <summary>
+    /// 페이즈 2 진입 조건 확인
+    /// </summary>
+    private bool ShouldEnterPhase2()
+    {
+        return !isPhase2 && health <= data.maxHealth * phase2HealthPercent;
     }
 
     void EnterPhase2()
@@ -54,38 +103,63 @@ public class Boss : Enemy
         isPhase2 = true;
         Debug.Log("[BOSS] Entered Phase 2!");
 
-        // 속도 증가
-        if (rb != null)
+        IncreaseSpeed();
+        ChangeAppearance();
+    }
+    /// <summary>
+    /// 속도 증가
+    /// </summary>
+    private void IncreaseSpeed()
+    {
+        if (rb != null && data != null)
         {
-            data.moveSpeed *= 1.5f;
+            data.moveSpeed *= PHASE2_SPEED_MULTIPLIER;
         }
+    }
 
-        // 색상 변경 (시각적 피드백)
-        var sprite = GetComponentInChildren<SpriteRenderer>();
+    /// <summary>
+    /// 외형 변경 (시각적 피드백)
+    /// </summary>
+    private void ChangeAppearance()
+    {
+        SpriteRenderer sprite = GetComponentInChildren<SpriteRenderer>();
         if (sprite != null)
         {
             sprite.color = Color.red;
         }
     }
+    #endregion
 
+    #region Pattern Cooldown
+    /// <summary>
+    /// 패턴 쿨다운 업데이트
+    /// </summary>
+    private void UpdatePatternCooldown()
+    {
+        if (patternCooldown > 0)
+        {
+            patternCooldown -= Time.deltaTime;
+        }
+    }
+    #endregion
+
+    #region Attack System
     protected override void Attack()
     {
         if (player == null) return;
 
-        rb.velocity = Vector2.zero;
+        StopMovement();
 
-        if (attackCooldown <= 0)
+        if (CanAttack())
         {
             attackCooldown = data.attackCooldown;
 
-            // 보스는 여러 패턴 사용
             if (isPhase2)
             {
                 ExecuteBossPattern();
             }
             else
             {
-                // 페이즈 1: 기본 공격
                 BasicAttack();
             }
         }
@@ -94,26 +168,26 @@ public class Boss : Enemy
     void BasicAttack()
     {
         // 근접 공격
-        float distance = Vector2.Distance(transform.position, player.position);
+        float distance = GetDistanceToPlayer();
+
         if (distance <= data.attackRange)
         {
-            var playerHealth = player.GetComponent<PlayerHealth>();
-            if (playerHealth != null)
-            {
-                playerHealth.TakeDamage(data.damage);
-                Debug.Log($"[BOSS] Basic attack! Damage: {data.damage}");
-            }
+            DamagePlayer();
+            Debug.Log($"[BOSS] Basic attack! Damage: {data.damage}");
         }
     }
+    #endregion
 
+    #region Boss Patterns
     void ExecuteBossPattern()
     {
-        if (patternCooldown > 0) return;
+        if (!CanExecutePattern())
+        {
+            return;
+        }
 
-        patternCooldown = 2f; // 패턴 간 쿨다운
-
-        // 패턴 순환
-        currentPattern = (currentPattern + 1) % 3;
+        patternCooldown = PATTERN_COOLDOWN;
+        currentPattern = GetNextPattern();
 
         switch (currentPattern)
         {
@@ -128,24 +202,39 @@ public class Boss : Enemy
                 break;
         }
     }
+    /// <summary>
+    /// 패턴 실행 가능 여부
+    /// </summary>
+    private bool CanExecutePattern()
+    {
+        return patternCooldown <= 0;
+    }
 
+    /// <summary>
+    /// 다음 패턴 선택
+    /// </summary>
+    private int GetNextPattern()
+    {
+        return (currentPattern + 1) % PATTERN_COUNT;
+    }
     /// <summary>
     /// 패턴 1: 3방향 투사체
     /// </summary>
     void Pattern_TripleShot()
     {
-        if (projectilePrefab == null || player == null) return;
+        if (!ValidateProjectile())
+        {
+            return;
+        }
 
         Debug.Log("[BOSS] Pattern: Triple Shot");
 
-        Vector2 directionToPlayer = (player.position - transform.position).normalized;
-
-        // 중앙, 좌, 우 방향으로 발사
+        Vector2 directionToPlayer = GetDirectionToPlayer();
         float[] angles = { 0f, -20f, 20f };
 
         foreach (float angle in angles)
         {
-            Vector2 direction = Rotate(directionToPlayer, angle);
+            Vector2 direction = RotateVector(directionToPlayer, angle);
             FireProjectile(direction);
         }
     }
@@ -155,25 +244,31 @@ public class Boss : Enemy
     /// </summary>
     void Pattern_CircleShot()
     {
-        if (projectilePrefab == null) return;
+        if (!ValidateProjectile())
+        {
+            return;
+        }
 
         Debug.Log("[BOSS] Pattern: Circle Shot");
 
-        int count = 8;
-        float angleStep = 360f / count;
+        int shotCount = 8;
+        float angleStep = 360f / shotCount;
 
-        for (int i = 0; i < count; i++)
+        for (int i = 0; i < shotCount; i++)
         {
             float angle = angleStep * i;
-            Vector2 direction = new Vector2(
-                Mathf.Cos(angle * Mathf.Deg2Rad),
-                Mathf.Sin(angle * Mathf.Deg2Rad)
-            );
-
+            Vector2 direction = CalculateCircleDirection(angle);
             FireProjectile(direction);
         }
     }
-
+    /// <summary>
+    /// 원형 방향 계산
+    /// </summary>
+    private Vector2 CalculateCircleDirection(float angle)
+    {
+        float radians = angle * Mathf.Deg2Rad;
+        return new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
+    }
     /// <summary>
     /// 패턴 3: 돌진
     /// </summary>
@@ -188,72 +283,118 @@ public class Boss : Enemy
 
     IEnumerator ChargeCoroutine()
     {
-        // 잠깐 멈춤 (예고)
         rb.velocity = Vector2.zero;
 
-        // 색상 깜빡임 (경고)
-        var sprite = GetComponentInChildren<SpriteRenderer>();
+        yield return StartCoroutine(ShowChargeWarning());
+
+        Vector2 chargeDirection = GetDirectionToPlayer();
+        rb.velocity = chargeDirection * data.moveSpeed * CHARGE_SPEED_MULTIPLIER;
+
+        yield return new WaitForSeconds(CHARGE_DURATION);
+
+        rb.velocity = Vector2.zero;
+    }
+    /// <summary>
+    /// 돌진 경고 표시
+    /// </summary>
+    IEnumerator ShowChargeWarning()
+    {
+        SpriteRenderer sprite = GetComponentInChildren<SpriteRenderer>();
+
         if (sprite != null)
         {
             Color originalColor = sprite.color;
             sprite.color = Color.yellow;
-            yield return new WaitForSeconds(0.5f);
+
+            yield return new WaitForSeconds(CHARGE_WARNING_DURATION);
+
             sprite.color = originalColor;
         }
+    }
+    #endregion
 
-        // 플레이어 방향으로 빠르게 돌진
-        Vector2 direction = (player.position - transform.position).normalized;
-        rb.velocity = direction * data.moveSpeed * 3f;
-
-        // 1초간 돌진
-        yield return new WaitForSeconds(1f);
-
-        // 정지
-        rb.velocity = Vector2.zero;
+    #region Projectile System
+    /// <summary>
+    /// 투사체 유효성 검사
+    /// </summary>
+    private bool ValidateProjectile()
+    {
+        return projectilePrefab != null && player != null;
     }
 
+    /// <summary>
+    /// 투사체 발사
+    /// </summary>
     void FireProjectile(Vector2 direction)
     {
         GameObject proj = Instantiate(projectilePrefab, transform.position, Quaternion.identity);
 
+        InitializeProjectile(proj, direction);
+        RotateProjectile(proj, direction);
+    }
+
+    /// <summary>
+    /// 투사체 초기화
+    /// </summary>
+    private void InitializeProjectile(GameObject proj, Vector2 direction)
+    {
         Projectile projectile = proj.GetComponent<Projectile>();
         if (projectile != null)
         {
             projectile.Initialize(data.damage, projectileSpeed, direction);
         }
+    }
 
-        // 투사체 회전 (방향에 맞게)
+    /// <summary>
+    /// 투사체 회전
+    /// </summary>
+    private void RotateProjectile(GameObject proj, Vector2 direction)
+    {
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
         proj.transform.rotation = Quaternion.Euler(0, 0, angle - 90f);
     }
+    #endregion
 
-    Vector2 Rotate(Vector2 v, float degrees)
+    #region Vector Math
+    /// <summary>
+    /// 벡터 회전
+    /// </summary>
+    Vector2 RotateVector(Vector2 v, float degrees)
     {
-        float rad = degrees * Mathf.Deg2Rad;
-        float sin = Mathf.Sin(rad);
-        float cos = Mathf.Cos(rad);
+        float radians = degrees * Mathf.Deg2Rad;
+        float sin = Mathf.Sin(radians);
+        float cos = Mathf.Cos(radians);
 
         return new Vector2(
             cos * v.x - sin * v.y,
             sin * v.x + cos * v.y
         );
     }
+    #endregion
 
+    #region Death
+    /// <summary>
+    /// 사망 처리
+    /// </summary>
     protected override void Die()
     {
         Debug.Log($"[BOSS] {data.enemyName} defeated!");
 
-        // 골드 드롭
-        if (PlayerStats.Instance != null)
-        {
-            PlayerStats.Instance.AddGold(data.goldDrop);
-        }
-
-        // 보스는 확정 아이템 드롭
-        // ★★★ 레어 무기 확정 드롭
+        DropGold();
         DropRareWeapon();
 
         Destroy(gameObject);
+    }
+
+    /// <summary>
+    /// 골드 드롭
+    /// </summary>
+    private void DropGold()
+    {
+        if (PlayerStats.Instance != null && data != null)
+        {
+            PlayerStats.Instance.AddGold(data.goldDrop);
+        }
     }
 
     /// <summary>
@@ -261,36 +402,67 @@ public class Boss : Enemy
     /// </summary>
     void DropRareWeapon()
     {
-        // Resources에서 Epic 이상 무기 로드
-        WeaponData[] allWeapons = Resources.LoadAll<WeaponData>("ScriptableObjects/Weapons");
+        WeaponData[] rareWeapons = LoadRareWeapons();
 
-        if (allWeapons == null || allWeapons.Length == 0)
-        {
-            Debug.LogWarning("[BOSS] No weapons found in Resources!");
-            return;
-        }
-
-        // Epic 또는 Legendary만 필터링
-        List<WeaponData> rareWeapons = new List<WeaponData>();
-        foreach (var weapon in allWeapons)
-        {
-            if (weapon.rarity == WeaponRarity.Epic || weapon.rarity == WeaponRarity.Legendary)
-            {
-                rareWeapons.Add(weapon);
-            }
-        }
-
-        if (rareWeapons.Count == 0)
+        if (rareWeapons.Length == 0)
         {
             Debug.LogWarning("[BOSS] No Epic/Legendary weapons found!");
             return;
         }
 
-        // 랜덤 선택
-        WeaponData selectedWeapon = rareWeapons[Random.Range(0, rareWeapons.Count)];
-
-        // 무기 드롭 오브젝트 생성
+        WeaponData selectedWeapon = SelectRandomWeapon(rareWeapons);
         CreateWeaponDrop(selectedWeapon, transform.position);
+    }
+
+    /// <summary>
+    /// 레어 무기 로드
+    /// </summary>
+    private WeaponData[] LoadRareWeapons()
+    {
+        WeaponData[] allWeapons = Resources.LoadAll<WeaponData>("ScriptableObjects/Weapons");
+
+        if (allWeapons == null || allWeapons.Length == 0)
+        {
+            Debug.LogWarning("[BOSS] No weapons found in Resources!");
+            return new WeaponData[0];
+        }
+
+        return FilterRareWeapons(allWeapons);
+    }
+
+    /// <summary>
+    /// Epic/Legendary 무기 필터링
+    /// </summary>
+    private WeaponData[] FilterRareWeapons(WeaponData[] allWeapons)
+    {
+        List<WeaponData> rareWeapons = new List<WeaponData>();
+
+        foreach (var weapon in allWeapons)
+        {
+            if (IsRareWeapon(weapon))
+            {
+                rareWeapons.Add(weapon);
+            }
+        }
+
+        return rareWeapons.ToArray();
+    }
+
+    /// <summary>
+    /// 레어 무기 여부 확인
+    /// </summary>
+    private bool IsRareWeapon(WeaponData weapon)
+    {
+        return weapon.rarity == WeaponRarity.Epic ||
+               weapon.rarity == WeaponRarity.Legendary;
+    }
+
+    /// <summary>
+    /// 랜덤 무기 선택
+    /// </summary>
+    private WeaponData SelectRandomWeapon(WeaponData[] weapons)
+    {
+        return weapons[Random.Range(0, weapons.Length)];
     }
 
     /// <summary>
@@ -300,40 +472,77 @@ public class Boss : Enemy
     {
         if (weapon == null) return;
 
-        // 드롭 오브젝트 생성
+        GameObject dropObj = CreateDropObject(weapon, position);
+        AddWeaponDropComponent(dropObj, weapon);
+        AddSpriteRenderer(dropObj, weapon);
+        AddGlowEffect(dropObj, weapon);
+        AddCollider(dropObj);
+
+        Debug.Log($"[BOSS] Dropped {weapon.GetRarityName()} weapon: {weapon.weaponName}");
+    }
+
+    /// <summary>
+    /// 드롭 오브젝트 생성
+    /// </summary>
+    private GameObject CreateDropObject(WeaponData weapon, Vector3 position)
+    {
         GameObject dropObj = new GameObject($"WeaponDrop_{weapon.weaponName}");
         dropObj.transform.position = position;
         dropObj.layer = LayerMask.NameToLayer("Default");
+        return dropObj;
+    }
 
-        // WeaponDrop 컴포넌트
+    /// <summary>
+    /// WeaponDrop 컴포넌트 추가
+    /// </summary>
+    private void AddWeaponDropComponent(GameObject dropObj, WeaponData weapon)
+    {
         WeaponDrop drop = dropObj.AddComponent<WeaponDrop>();
         drop.Initialize(weapon);
+    }
 
-        // SpriteRenderer
+    /// <summary>
+    /// SpriteRenderer 추가
+    /// </summary>
+    private void AddSpriteRenderer(GameObject dropObj, WeaponData weapon)
+    {
         SpriteRenderer sr = dropObj.AddComponent<SpriteRenderer>();
+
         if (weapon.weaponIcon != null)
         {
             sr.sprite = weapon.weaponIcon;
         }
+
         sr.sortingOrder = 10;
         sr.color = weapon.GetRarityColor();
+    }
 
-        // 글로우 효과 (자식 오브젝트)
+    /// <summary>
+    /// 글로우 효과 추가
+    /// </summary>
+    private void AddGlowEffect(GameObject dropObj, WeaponData weapon)
+    {
         GameObject glowObj = new GameObject("Glow");
         glowObj.transform.SetParent(dropObj.transform);
         glowObj.transform.localPosition = Vector3.zero;
         glowObj.transform.localScale = Vector3.one * 1.5f;
 
         SpriteRenderer glowSr = glowObj.AddComponent<SpriteRenderer>();
-        glowSr.sprite = sr.sprite;
+        glowSr.sprite = weapon.weaponIcon;
         glowSr.sortingOrder = 9;
-        glowSr.color = new Color(weapon.GetRarityColor().r, weapon.GetRarityColor().g, weapon.GetRarityColor().b, 0.5f);
 
-        // Collider
+        Color glowColor = weapon.GetRarityColor();
+        glowSr.color = new Color(glowColor.r, glowColor.g, glowColor.b, 0.5f);
+    }
+
+    /// <summary>
+    /// Collider 추가
+    /// </summary>
+    private void AddCollider(GameObject dropObj)
+    {
         CircleCollider2D col = dropObj.AddComponent<CircleCollider2D>();
         col.isTrigger = true;
         col.radius = 0.8f;
-
-        Debug.Log($"[BOSS] Dropped {weapon.GetRarityName()} weapon: {weapon.weaponName}");
     }
+    #endregion
 }
