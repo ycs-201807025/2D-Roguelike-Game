@@ -7,43 +7,49 @@ using UnityEngine;
 /// </summary>
 public class PersistentDataManager : MonoBehaviour
 {
+    #region Singleton
     public static PersistentDataManager Instance { get; private set; }
+    #endregion
 
+    #region Constants
+    private const string SOULS_KEY = "Souls";
+    private const string UPGRADE_KEY_PREFIX = "Upgrade_";
+    private const int DEBUG_SOULS_AMOUNT = 1000;
+    #endregion
+
+    #region Serialized Fields
     [Header("Debug")]
     [SerializeField] private bool resetDataOnStart = false;
 
-    // 재화
-    public int souls = 0;
-     
-    // 업그레이드 레벨 (UpgradeType을 키로 사용)
-    private Dictionary<UpgradeType, int> upgradeLevels = new Dictionary<UpgradeType, int>();
-
-    // 업그레이드 데이터 (Inspector에서 할당)
     [Header("Upgrade References")]
     [SerializeField] private UpgradeData[] allUpgrades;
-    private Dictionary<UpgradeType, UpgradeData> upgradeDataDict = new Dictionary<UpgradeType, UpgradeData>();
+    #endregion
 
+    #region State
+    public int souls = 0;
+    private Dictionary<UpgradeType, int> upgradeLevels = new Dictionary<UpgradeType, int>();
+    private Dictionary<UpgradeType, UpgradeData> upgradeDataDict = new Dictionary<UpgradeType, UpgradeData>();
+    #endregion
+
+    #region Unity Lifecycle
     void Awake()
     {
-        // 싱글톤 패턴
+        InitializeSingleton();
+        InitializeUpgradeData();
+        LoadOrResetData();
+    }
+    #endregion
+
+    #region Initialization
+    /// <summary>
+    /// 싱글톤 초기화
+    /// </summary>
+    private void InitializeSingleton()
+    {
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-
-            // 업그레이드 데이터 딕셔너리 초기화
-            InitializeUpgradeData();
-
-            // 데이터 로드
-            if (resetDataOnStart)
-            {
-                Debug.Log("[PERSISTENT] Resetting all data...");
-                ResetAllData();
-            }
-            else
-            {
-                LoadData();
-            }
         }
         else
         {
@@ -51,16 +57,41 @@ public class PersistentDataManager : MonoBehaviour
         }
     }
 
-    void InitializeUpgradeData()
+    /// <summary>
+    /// 업그레이드 데이터 초기화
+    /// </summary>
+    private void InitializeUpgradeData()
     {
         upgradeDataDict.Clear();
 
-        if (allUpgrades == null || allUpgrades.Length == 0)
+        if (!ValidateUpgradeData())
         {
-            Debug.LogWarning("[PERSISTENT] No upgrade data assigned!");
             return;
         }
 
+        BuildUpgradeDictionary();
+
+        Debug.Log($"[PERSISTENT] Initialized {upgradeDataDict.Count} upgrade types");
+    }
+
+    /// <summary>
+    /// 업그레이드 데이터 유효성 검사
+    /// </summary>
+    private bool ValidateUpgradeData()
+    {
+        if (allUpgrades == null || allUpgrades.Length == 0)
+        {
+            Debug.LogWarning("[PERSISTENT] No upgrade data assigned!");
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 업그레이드 딕셔너리 구성
+    /// </summary>
+    private void BuildUpgradeDictionary()
+    {
         foreach (var upgrade in allUpgrades)
         {
             if (upgrade != null)
@@ -68,10 +99,26 @@ public class PersistentDataManager : MonoBehaviour
                 upgradeDataDict[upgrade.upgradeType] = upgrade;
             }
         }
-
-        Debug.Log($"[PERSISTENT] Initialized {upgradeDataDict.Count} upgrade types");
     }
 
+    /// <summary>
+    /// 데이터 로드 또는 리셋
+    /// </summary>
+    private void LoadOrResetData()
+    {
+        if (resetDataOnStart)
+        {
+            Debug.Log("[PERSISTENT] Resetting all data...");
+            ResetAllData();
+        }
+        else
+        {
+            LoadData();
+        }
+    }
+    #endregion
+
+    #region Data Loading
     /// <summary>
     /// 데이터 로드
     /// </summary>
@@ -79,15 +126,31 @@ public class PersistentDataManager : MonoBehaviour
     {
         Debug.Log("[PERSISTENT] ═══ Loading Data ═══");
 
-        // 영혼
-        souls = PlayerPrefs.GetInt("Souls", 0);
-        Debug.Log($"[PERSISTENT] Souls: {souls}");
+        LoadSouls();
+        LoadUpgradeLevels();
 
-        // 업그레이드 레벨
+        Debug.Log("[PERSISTENT] ═══ Load Complete ═══");
+    }
+
+    /// <summary>
+    /// 영혼 로드
+    /// </summary>
+    private void LoadSouls()
+    {
+        souls = PlayerPrefs.GetInt(SOULS_KEY, 0);
+        Debug.Log($"[PERSISTENT] Souls: {souls}");
+    }
+
+    /// <summary>
+    /// 업그레이드 레벨 로드
+    /// </summary>
+    private void LoadUpgradeLevels()
+    {
         upgradeLevels.Clear();
+
         foreach (UpgradeType type in System.Enum.GetValues(typeof(UpgradeType)))
         {
-            string key = "Upgrade_" + type.ToString();
+            string key = BuildUpgradeKey(type);
             int level = PlayerPrefs.GetInt(key, 0);
             upgradeLevels[type] = level;
 
@@ -96,10 +159,18 @@ public class PersistentDataManager : MonoBehaviour
                 Debug.Log($"[PERSISTENT] {type}: Level {level}");
             }
         }
-
-        Debug.Log("[PERSISTENT] ═══ Load Complete ═══");
     }
 
+    /// <summary>
+    /// 업그레이드 키 생성
+    /// </summary>
+    private string BuildUpgradeKey(UpgradeType type)
+    {
+        return UPGRADE_KEY_PREFIX + type.ToString();
+    }
+    #endregion
+
+    #region Data Saving
     /// <summary>
     /// 데이터 저장
     /// </summary>
@@ -107,14 +178,30 @@ public class PersistentDataManager : MonoBehaviour
     {
         Debug.Log("[PERSISTENT] ═══ Saving Data ═══");
 
-        // 영혼 저장
-        PlayerPrefs.SetInt("Souls", souls);
-        Debug.Log($"[PERSISTENT] Saved Souls: {souls}");
+        SaveSouls();
+        SaveUpgradeLevels();
+        CommitSave();
 
-        // 업그레이드 레벨 저장
+        Debug.Log("[PERSISTENT] ═══ Save Complete ═══");
+    }
+
+    /// <summary>
+    /// 영혼 저장
+    /// </summary>
+    private void SaveSouls()
+    {
+        PlayerPrefs.SetInt(SOULS_KEY, souls);
+        Debug.Log($"[PERSISTENT] Saved Souls: {souls}");
+    }
+
+    /// <summary>
+    /// 업그레이드 레벨 저장
+    /// </summary>
+    private void SaveUpgradeLevels()
+    {
         foreach (var kvp in upgradeLevels)
         {
-            string key = "Upgrade_" + kvp.Key.ToString();
+            string key = BuildUpgradeKey(kvp.Key);
             PlayerPrefs.SetInt(key, kvp.Value);
 
             if (kvp.Value > 0)
@@ -122,11 +209,18 @@ public class PersistentDataManager : MonoBehaviour
                 Debug.Log($"[PERSISTENT] Saved {kvp.Key}: Level {kvp.Value}");
             }
         }
-
-        PlayerPrefs.Save();
-        Debug.Log("[PERSISTENT] ═══ Save Complete ═══");
     }
 
+    /// <summary>
+    /// 저장 커밋
+    /// </summary>
+    private void CommitSave()
+    {
+        PlayerPrefs.Save();
+    }
+    #endregion
+
+    #region Upgrade Management
     /// <summary>
     /// 특정 업그레이드의 현재 레벨
     /// </summary>
@@ -174,7 +268,9 @@ public class PersistentDataManager : MonoBehaviour
         }
         return null;
     }
+    #endregion
 
+    #region Data Reset
     /// <summary>
     /// 모든 데이터 초기화
     /// </summary>
@@ -182,28 +278,45 @@ public class PersistentDataManager : MonoBehaviour
     {
         Debug.Log("[PERSISTENT] ═══ RESETTING ALL DATA ═══");
 
-        souls = 0;
-        upgradeLevels.Clear();
-
-        PlayerPrefs.DeleteAll();
-        PlayerPrefs.Save();
+        ClearRuntimeData();
+        ClearPlayerPrefs();
 
         Debug.Log("[PERSISTENT] All data has been reset");
     }
 
     /// <summary>
-    /// 디버그용: 영혼 추가
+    /// 런타임 데이터 클리어
+    /// </summary>
+    private void ClearRuntimeData()
+    {
+        souls = 0;
+        upgradeLevels.Clear();
+    }
+
+    /// <summary>
+    /// PlayerPrefs 클리어
+    /// </summary>
+    private void ClearPlayerPrefs()
+    {
+        PlayerPrefs.DeleteAll();
+        PlayerPrefs.Save();
+    }
+    #endregion
+
+    #region Debug Methods
+    /// <summary>
+    /// 디버그: 영혼 추가
     /// </summary>
     [ContextMenu("Add 1000 Souls")]
     public void AddSoulsDebug()
     {
-        souls += 1000;
+        souls += DEBUG_SOULS_AMOUNT;
         SaveData();
-        Debug.Log($"[DEBUG] Added 1000 souls. Total: {souls}");
+        Debug.Log($"[DEBUG] Added {DEBUG_SOULS_AMOUNT} souls. Total: {souls}");
     }
 
     /// <summary>
-    /// 디버그용: 데이터 출력
+    /// 디버그: 데이터 출력
     /// </summary>
     [ContextMenu("Print All Data")]
     public void PrintAllData()
@@ -211,6 +324,14 @@ public class PersistentDataManager : MonoBehaviour
         Debug.Log("═══ PERSISTENT DATA ═══");
         Debug.Log($"Souls: {souls}");
 
+        PrintUpgradeLevels();
+    }
+
+    /// <summary>
+    /// 업그레이드 레벨 출력
+    /// </summary>
+    private void PrintUpgradeLevels()
+    {
         foreach (var kvp in upgradeLevels)
         {
             if (kvp.Value > 0)
@@ -220,5 +341,6 @@ public class PersistentDataManager : MonoBehaviour
             }
         }
     }
+    #endregion
 }
 
