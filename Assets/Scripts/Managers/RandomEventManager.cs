@@ -9,6 +9,12 @@ using TMPro;
 /// </summary>
 public class RandomEventManager : MonoBehaviour
 {
+    #region Constants
+    private const float PAUSED_TIME_SCALE = 0f;
+    private const float NORMAL_TIME_SCALE = 1f;
+    #endregion
+
+    #region Serialized Fields
     [Header("UI References")]
     [SerializeField] private GameObject eventPanel;
     [SerializeField] private TextMeshProUGUI titleText;
@@ -18,87 +24,186 @@ public class RandomEventManager : MonoBehaviour
 
     [Header("Event Data")]
     [SerializeField] private RandomEventData[] allEvents;
+    #endregion
 
+    #region State
     private RandomEventData currentEvent;
+    #endregion
 
+    #region Unity Lifecycle
     void Start()
+    {
+        HidePanel();
+    }
+    #endregion
+
+    #region Initialization
+    /// <summary>
+    /// 패널 초기 숨김
+    /// </summary>
+    private void HidePanel()
     {
         if (eventPanel != null)
         {
             eventPanel.SetActive(false);
         }
     }
+    #endregion
 
+    #region Event Triggering
     /// <summary>
     /// 랜덤 사건 시작
     /// </summary>
     public void TriggerRandomEvent()
     {
-        if (allEvents == null || allEvents.Length == 0)
+        if (!ValidateEvents())
         {
-            Debug.LogWarning("[EVENT] No events configured");
             return;
         }
 
-        // 랜덤 사건 선택
-        currentEvent = allEvents[Random.Range(0, allEvents.Length)];
+        currentEvent = SelectRandomEvent();
+        ShowEvent();
 
         Debug.Log($"[EVENT] Triggered: {currentEvent.eventTitle}");
-
-        ShowEvent();
     }
 
-    void ShowEvent()
+    /// <summary>
+    /// 이벤트 유효성 검사
+    /// </summary>
+    private bool ValidateEvents()
     {
-        if (currentEvent == null) return;
+        if (allEvents == null || allEvents.Length == 0)
+        {
+            Debug.LogWarning("[EVENT] No events configured");
+            return false;
+        }
+        return true;
+    }
 
-        // UI 표시
+    /// <summary>
+    /// 랜덤 사건 선택
+    /// </summary>
+    private RandomEventData SelectRandomEvent()
+    {
+        return allEvents[Random.Range(0, allEvents.Length)];
+    }
+    #endregion
+
+    #region UI Display
+    /// <summary>
+    /// 사건 표시
+    /// </summary>
+    private void ShowEvent()
+    {
+        if (currentEvent == null)
+        {
+            return;
+        }
+
+        ActivatePanel();
+        DisplayEventInfo();
+        ClearExistingButtons();
+        CreateOptionButtons();
+        PauseGame();
+    }
+
+    /// <summary>
+    /// 패널 활성화
+    /// </summary>
+    private void ActivatePanel()
+    {
         if (eventPanel != null)
         {
             eventPanel.SetActive(true);
         }
+    }
 
-        // 제목과 설명
+    /// <summary>
+    /// 사건 정보 표시
+    /// </summary>
+    private void DisplayEventInfo()
+    {
+        SetTitle();
+        SetDescription();
+    }
+
+    /// <summary>
+    /// 제목 설정
+    /// </summary>
+    private void SetTitle()
+    {
         if (titleText != null)
         {
             titleText.text = currentEvent.eventTitle;
         }
+    }
 
+    /// <summary>
+    /// 설명 설정
+    /// </summary>
+    private void SetDescription()
+    {
         if (descriptionText != null)
         {
             descriptionText.text = currentEvent.eventDescription;
         }
+    }
 
-        // 기존 버튼 삭제
+    /// <summary>
+    /// 기존 버튼 삭제
+    /// </summary>
+    private void ClearExistingButtons()
+    {
         foreach (Transform child in buttonContainer)
         {
             Destroy(child.gameObject);
         }
+    }
 
-        // 선택지 버튼 생성
+    /// <summary>
+    /// 선택지 버튼 생성
+    /// </summary>
+    private void CreateOptionButtons()
+    {
         for (int i = 0; i < currentEvent.options.Length; i++)
         {
             CreateOptionButton(currentEvent.options[i], i);
         }
-
-        // 게임 일시정지
-        Time.timeScale = 0f;
     }
 
-    void CreateOptionButton(EventOption option, int index)
+    /// <summary>
+    /// 개별 선택지 버튼 생성
+    /// </summary>
+    private void CreateOptionButton(EventOption option, int index)
     {
-        if (optionButtonPrefab == null || buttonContainer == null) return;
+        if (optionButtonPrefab == null || buttonContainer == null)
+        {
+            return;
+        }
 
         GameObject buttonObj = Instantiate(optionButtonPrefab, buttonContainer);
 
-        // 텍스트 설정
+        SetButtonText(buttonObj, option);
+        SetButtonEvent(buttonObj, option, index);
+    }
+
+    /// <summary>
+    /// 버튼 텍스트 설정
+    /// </summary>
+    private void SetButtonText(GameObject buttonObj, EventOption option)
+    {
         TextMeshProUGUI buttonText = buttonObj.GetComponentInChildren<TextMeshProUGUI>();
         if (buttonText != null)
         {
             buttonText.text = option.optionText;
         }
+    }
 
-        // 버튼 이벤트
+    /// <summary>
+    /// 버튼 이벤트 설정
+    /// </summary>
+    private void SetButtonEvent(GameObject buttonObj, EventOption option, int index)
+    {
         Button button = buttonObj.GetComponent<Button>();
         if (button != null)
         {
@@ -107,77 +212,164 @@ public class RandomEventManager : MonoBehaviour
         }
     }
 
-    void OnOptionSelected(EventOption option, int index)
+    /// <summary>
+    /// 게임 일시정지
+    /// </summary>
+    private void PauseGame()
+    {
+        Time.timeScale = PAUSED_TIME_SCALE;
+    }
+    #endregion
+
+    #region Option Selection
+    /// <summary>
+    /// 선택지 선택 시
+    /// </summary>
+    private void OnOptionSelected(EventOption option, int index)
     {
         Debug.Log($"[EVENT] Selected option {index}: {option.optionText}");
 
-        // 비용 체크
-        bool canAfford = true;
-
-        if (PlayerStats.Instance != null)
+        if (!CanAffordOption(option))
         {
-            if (option.goldCost > 0 && PlayerStats.Instance.Gold < option.goldCost)
-            {
-                Debug.Log("[EVENT] Not enough gold!");
-                canAfford = false;
-            }
-
-            if (option.healthCost > 0 && PlayerStats.Instance.CurrentHealth <= option.healthCost)
-            {
-                Debug.Log("[EVENT] Not enough health!");
-                canAfford = false;
-            }
-        }
-
-        if (!canAfford)
-        {
-            // 구매 불가 메시지 (선택사항)
             return;
         }
 
-        // 비용 지불
-        if (PlayerStats.Instance != null)
-        {
-            if (option.goldCost != 0)
-            {
-                PlayerStats.Instance.AddGold(-option.goldCost);
-            }
-
-            if (option.healthCost > 0)
-            {
-                PlayerStats.Instance.TakeDamage(option.healthCost);
-            }
-            else if (option.healthCost < 0)
-            {
-                PlayerStats.Instance.Heal(-option.healthCost);
-            }
-        }
-
-        // 보상 지급
-        if (option.rewardItem != null)
-        {
-            Inventory inventory = FindObjectOfType<Inventory>();
-            if (inventory != null)
-            {
-                inventory.AddItem(option.rewardItem);
-                Debug.Log($"[EVENT] Reward: {option.rewardItem.itemName}");
-            }
-        }
-
-        // UI 닫기
+        PayCosts(option);
+        GiveRewards(option);
         CloseEvent();
     }
 
-    void CloseEvent()
+    /// <summary>
+    /// 비용 지불 가능 여부
+    /// </summary>
+    private bool CanAffordOption(EventOption option)
+    {
+        if (PlayerStats.Instance == null)
+        {
+            return true;
+        }
+
+        if (!HasEnoughGold(option))
+        {
+            Debug.Log("[EVENT] Not enough gold!");
+            return false;
+        }
+
+        if (!HasEnoughHealth(option))
+        {
+            Debug.Log("[EVENT] Not enough health!");
+            return false;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 골드 충분한지 확인
+    /// </summary>
+    private bool HasEnoughGold(EventOption option)
+    {
+        return option.goldCost <= 0 ||
+               PlayerStats.Instance.Gold >= option.goldCost;
+    }
+
+    /// <summary>
+    /// 체력 충분한지 확인
+    /// </summary>
+    private bool HasEnoughHealth(EventOption option)
+    {
+        return option.healthCost <= 0 ||
+               PlayerStats.Instance.CurrentHealth > option.healthCost;
+    }
+
+    /// <summary>
+    /// 비용 지불
+    /// </summary>
+    private void PayCosts(EventOption option)
+    {
+        if (PlayerStats.Instance == null)
+        {
+            return;
+        }
+
+        PayGoldCost(option);
+        PayHealthCost(option);
+    }
+
+    /// <summary>
+    /// 골드 비용 지불
+    /// </summary>
+    private void PayGoldCost(EventOption option)
+    {
+        if (option.goldCost != 0)
+        {
+            PlayerStats.Instance.AddGold(-option.goldCost);
+        }
+    }
+
+    /// <summary>
+    /// 체력 비용 지불
+    /// </summary>
+    private void PayHealthCost(EventOption option)
+    {
+        if (option.healthCost > 0)
+        {
+            PlayerStats.Instance.TakeDamage(option.healthCost);
+        }
+        else if (option.healthCost < 0)
+        {
+            PlayerStats.Instance.Heal(-option.healthCost);
+        }
+    }
+
+    /// <summary>
+    /// 보상 지급
+    /// </summary>
+    private void GiveRewards(EventOption option)
+    {
+        if (option.rewardItem == null)
+        {
+            return;
+        }
+
+        Inventory inventory = FindObjectOfType<Inventory>();
+        if (inventory != null)
+        {
+            inventory.AddItem(option.rewardItem);
+            Debug.Log($"[EVENT] Reward: {option.rewardItem.itemName}");
+        }
+    }
+    #endregion
+
+    #region Event Closing
+    /// <summary>
+    /// 사건 종료
+    /// </summary>
+    private void CloseEvent()
+    {
+        DeactivatePanel();
+        ResumeGame();
+
+        Debug.Log("[EVENT] Event closed");
+    }
+
+    /// <summary>
+    /// 패널 비활성화
+    /// </summary>
+    private void DeactivatePanel()
     {
         if (eventPanel != null)
         {
             eventPanel.SetActive(false);
         }
-
-        // 게임 재개
-        Time.timeScale = 1f;
-
-        Debug.Log("[EVENT] Event closed");
     }
+
+    /// <summary>
+    /// 게임 재개
+    /// </summary>
+    private void ResumeGame()
+    {
+        Time.timeScale = NORMAL_TIME_SCALE;
+    }
+    #endregion
 }

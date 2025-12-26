@@ -9,6 +9,12 @@ using UnityEngine.UI;
 /// </summary>
 public class UpgradeManager : MonoBehaviour
 {
+    #region Constants
+    private const float PAUSED_TIME_SCALE = 0f;
+    private const float NORMAL_TIME_SCALE = 1f;
+    #endregion
+
+    #region Serialized Fields
     [Header("UI References")]
     [SerializeField] private GameObject upgradePanel;
     [SerializeField] private Transform buttonContainer; // ScrollView의 Content
@@ -18,49 +24,88 @@ public class UpgradeManager : MonoBehaviour
 
     [Header("Upgrade Data")]
     [SerializeField] private UpgradeData[] allUpgrades;
+    #endregion
 
+    #region Components
     private PersistentDataManager dataManager;
+    #endregion
 
+    #region Unity Lifecycle
     void Start()
+    {
+        InitializeComponents();
+        SetupUI();
+        HidePanel();
+    }
+
+    void Update()
+    {
+        HandleToggleInput();
+    }
+    #endregion
+
+    #region Initialization
+    /// <summary>
+    /// 컴포넌트 초기화
+    /// </summary>
+    private void InitializeComponents()
     {
         dataManager = PersistentDataManager.Instance;
 
         if (dataManager == null)
         {
-            Debug.LogError("PersistentDataManager not found!");
-            return;
+            Debug.LogError("[UPGRADE MANAGER] PersistentDataManager not found!");
         }
-
-        SetupUI();
-
-        // 처음엔 패널 비활성화
-        upgradePanel.SetActive(false);
     }
 
-    void SetupUI()
+    /// <summary>
+    /// UI 설정
+    /// </summary>
+    private void SetupUI()
     {
-        // 기존 버튼들 모두 삭제 (재생성)
+        ClearExistingButtons();
+        CreateUpgradeButtons();
+        SetupCloseButton();
+        UpdateSoulsDisplay();
+    }
+
+    /// <summary>
+    /// 기존 버튼 삭제
+    /// </summary>
+    private void ClearExistingButtons()
+    {
         foreach (Transform child in buttonContainer)
         {
             Destroy(child.gameObject);
         }
+    }
 
-        // 모든 업그레이드에 대한 버튼 생성
+    /// <summary>
+    /// 업그레이드 버튼 생성
+    /// </summary>
+    private void CreateUpgradeButtons()
+    {
         foreach (var upgradeData in allUpgrades)
         {
             CreateUpgradeButton(upgradeData);
         }
-
-        // 닫기 버튼 이벤트
-        closeButton.onClick.AddListener(ClosePanel);
-
-        // 초기 영혼 개수 업데이트
-        UpdateSoulsDisplay();
     }
 
-    void CreateUpgradeButton(UpgradeData data)
+    /// <summary>
+    /// 개별 업그레이드 버튼 생성
+    /// </summary>
+    private void CreateUpgradeButton(UpgradeData data)
     {
         GameObject buttonObj = Instantiate(upgradeButtonPrefab, buttonContainer);
+
+        InitializeUpgradeButton(buttonObj, data);
+    }
+
+    /// <summary>
+    /// 업그레이드 버튼 초기화
+    /// </summary>
+    private void InitializeUpgradeButton(GameObject buttonObj, UpgradeData data)
+    {
         UpgradeButton button = buttonObj.GetComponent<UpgradeButton>();
 
         if (button != null)
@@ -70,55 +115,144 @@ public class UpgradeManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 닫기 버튼 설정
+    /// </summary>
+    private void SetupCloseButton()
+    {
+        if (closeButton != null)
+        {
+            closeButton.onClick.AddListener(ClosePanel);
+        }
+    }
+
+    /// <summary>
+    /// 패널 초기 숨김
+    /// </summary>
+    private void HidePanel()
+    {
+        if (upgradePanel != null)
+        {
+            upgradePanel.SetActive(false);
+        }
+    }
+    #endregion
+
+    #region Purchase System
+    /// <summary>
     /// 업그레이드 구매 시도
     /// </summary>
     public bool TryPurchaseUpgrade(UpgradeData data)
     {
-        int currentLevel = dataManager.GetUpgradeLevel(data.upgradeType);
-
-        // 최대 레벨 체크
-        if (currentLevel >= data.maxLevel)
+        if (!CanPurchase(data, out int cost, out int currentLevel))
         {
-            Debug.Log($"[UPGRADE] {data.upgradeName} is already max level!");
             return false;
         }
 
-        int cost = data.costs[currentLevel];
+        ExecutePurchase(data, cost, currentLevel);
+        UpdateUI();
+        ApplyUpgradeToCurrentGame();
 
-        // 영혼 부족 체크
-        if (dataManager.souls < cost)
+        return true;
+    }
+
+    /// <summary>
+    /// 구매 가능 여부 확인
+    /// </summary>
+    private bool CanPurchase(UpgradeData data, out int cost, out int currentLevel)
+    {
+        currentLevel = dataManager.GetUpgradeLevel(data.upgradeType);
+        cost = 0;
+
+        if (!CheckMaxLevel(data, currentLevel))
         {
-            Debug.Log($"[UPGRADE] Not enough souls! Need: {cost}, Have: {dataManager.souls}");
             return false;
         }
 
-        // 구매 성공
-        dataManager.souls -= cost;
-        dataManager.SetUpgradeLevel(data.upgradeType, currentLevel + 1);
-        dataManager.SaveData();
+        cost = data.costs[currentLevel];
 
-        Debug.Log($"[UPGRADE] ✓ Purchased {data.upgradeName} Lv.{currentLevel + 1} for {cost} souls");
-
-        // UI 업데이트
-        UpdateAllButtons();
-        UpdateSoulsDisplay();
-
-        // ★★★ 추가: 게임 중이라면 즉시 스탯 적용 ★★★
-        if (PlayerStats.Instance != null)
+        if (!CheckSoulBalance(cost))
         {
-            Debug.Log("[UPGRADE] Applying upgrade to current game...");
-            PlayerStats.Instance.UpdateFromPersistentData();
-
-            // 체력도 최대치에 맞춰 조정 (현재 체력 비율 유지)
-            float healthRatio = (float)PlayerStats.Instance.CurrentHealth / PlayerStats.Instance.MaxHealth;
-            int newCurrentHealth = Mathf.RoundToInt(PlayerStats.Instance.MaxHealth * healthRatio);
-            PlayerStats.Instance.SetHealth(newCurrentHealth, PlayerStats.Instance.MaxHealth);
+            return false;
         }
 
         return true;
     }
 
-    void UpdateAllButtons()
+    /// <summary>
+    /// 최대 레벨 확인
+    /// </summary>
+    private bool CheckMaxLevel(UpgradeData data, int currentLevel)
+    {
+        if (currentLevel >= data.maxLevel)
+        {
+            Debug.Log($"[UPGRADE] {data.upgradeName} is already max level!");
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 영혼 잔액 확인
+    /// </summary>
+    private bool CheckSoulBalance(int cost)
+    {
+        if (dataManager.souls < cost)
+        {
+            Debug.Log($"[UPGRADE] Not enough souls! Need: {cost}, Have: {dataManager.souls}");
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 구매 실행
+    /// </summary>
+    private void ExecutePurchase(UpgradeData data, int cost, int currentLevel)
+    {
+        DeductSouls(cost);
+        IncrementUpgradeLevel(data, currentLevel);
+        SavePurchase();
+
+        Debug.Log($"[UPGRADE] ✓ Purchased {data.upgradeName} Lv.{currentLevel + 1} for {cost} souls");
+    }
+
+    /// <summary>
+    /// 영혼 차감
+    /// </summary>
+    private void DeductSouls(int cost)
+    {
+        dataManager.souls -= cost;
+    }
+
+    /// <summary>
+    /// 업그레이드 레벨 증가
+    /// </summary>
+    private void IncrementUpgradeLevel(UpgradeData data, int currentLevel)
+    {
+        dataManager.SetUpgradeLevel(data.upgradeType, currentLevel + 1);
+    }
+
+    /// <summary>
+    /// 구매 저장
+    /// </summary>
+    private void SavePurchase()
+    {
+        dataManager.SaveData();
+    }
+
+    /// <summary>
+    /// UI 업데이트
+    /// </summary>
+    private void UpdateUI()
+    {
+        UpdateAllButtons();
+        UpdateSoulsDisplay();
+    }
+
+    /// <summary>
+    /// 모든 버튼 업데이트
+    /// </summary>
+    private void UpdateAllButtons()
     {
         foreach (Transform child in buttonContainer)
         {
@@ -130,11 +264,58 @@ public class UpgradeManager : MonoBehaviour
         }
     }
 
-    void UpdateSoulsDisplay()
+    /// <summary>
+    /// 현재 게임에 업그레이드 적용
+    /// </summary>
+    private void ApplyUpgradeToCurrentGame()
     {
-        if (soulsText == null)
+        if (PlayerStats.Instance == null)
         {
-            Debug.LogWarning("[UPGRADE MANAGER] soulsText is null! Please assign in Inspector.");
+            return;
+        }
+
+        Debug.Log("[UPGRADE] Applying upgrade to current game...");
+
+        PlayerStats.Instance.UpdateFromPersistentData();
+        AdjustCurrentHealth();
+    }
+
+    /// <summary>
+    /// 현재 체력 조정 (체력 비율 유지)
+    /// </summary>
+    private void AdjustCurrentHealth()
+    {
+        float healthRatio = CalculateHealthRatio();
+        int newCurrentHealth = CalculateNewHealth(healthRatio);
+
+        PlayerStats.Instance.SetHealth(newCurrentHealth, PlayerStats.Instance.MaxHealth);
+    }
+
+    /// <summary>
+    /// 체력 비율 계산
+    /// </summary>
+    private float CalculateHealthRatio()
+    {
+        return (float)PlayerStats.Instance.CurrentHealth / PlayerStats.Instance.MaxHealth;
+    }
+
+    /// <summary>
+    /// 새로운 체력 계산
+    /// </summary>
+    private int CalculateNewHealth(float healthRatio)
+    {
+        return Mathf.RoundToInt(PlayerStats.Instance.MaxHealth * healthRatio);
+    }
+    #endregion
+
+    #region UI Management
+    /// <summary>
+    /// 영혼 표시 업데이트
+    /// </summary>
+    private void UpdateSoulsDisplay()
+    {
+        if (!ValidateSoulsText())
+        {
             return;
         }
 
@@ -148,19 +329,53 @@ public class UpgradeManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 영혼 텍스트 유효성 검사
+    /// </summary>
+    private bool ValidateSoulsText()
+    {
+        if (soulsText == null)
+        {
+            Debug.LogWarning("[UPGRADE MANAGER] soulsText is null! Please assign in Inspector.");
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
     /// 패널 열기
     /// </summary>
     public void OpenPanel()
     {
-        if (upgradePanel == null)
+        if (!ValidateUpgradePanel())
         {
-            Debug.LogError("[UPGRADE MANAGER] upgradePanel is null!");
             return;
         }
+
         upgradePanel.SetActive(true);
         UpdateAllButtons();
         UpdateSoulsDisplay();
-        Time.timeScale = 0f; // 게임 일시정지
+        PauseGame();
+    }
+
+    /// <summary>
+    /// 업그레이드 패널 유효성 검사
+    /// </summary>
+    private bool ValidateUpgradePanel()
+    {
+        if (upgradePanel == null)
+        {
+            Debug.LogError("[UPGRADE MANAGER] upgradePanel is null!");
+            return false;
+        }
+        return true;
+    }
+
+    /// <summary>
+    /// 게임 일시정지
+    /// </summary>
+    private void PauseGame()
+    {
+        Time.timeScale = PAUSED_TIME_SCALE;
     }
 
     /// <summary>
@@ -168,23 +383,53 @@ public class UpgradeManager : MonoBehaviour
     /// </summary>
     public void ClosePanel()
     {
-        upgradePanel.SetActive(false);
-        Time.timeScale = 1f; // 게임 재개
+        if (upgradePanel != null)
+        {
+            upgradePanel.SetActive(false);
+        }
+
+        ResumeGame();
     }
 
-    void Update()
+    /// <summary>
+    /// 게임 재개
+    /// </summary>
+    private void ResumeGame()
     {
-        // U키로 강화 패널 토글 (테스트용)
+        Time.timeScale = NORMAL_TIME_SCALE;
+    }
+    #endregion
+
+    #region Input Handling
+    /// <summary>
+    /// 토글 입력 처리
+    /// </summary>
+    private void HandleToggleInput()
+    {
         if (Input.GetKeyDown(KeyCode.U))
         {
-            if (upgradePanel.activeSelf)
-            {
-                ClosePanel();
-            }
-            else
-            {
-                OpenPanel();
-            }
+            TogglePanel();
         }
     }
+
+    /// <summary>
+    /// 패널 토글
+    /// </summary>
+    private void TogglePanel()
+    {
+        if (upgradePanel == null)
+        {
+            return;
+        }
+
+        if (upgradePanel.activeSelf)
+        {
+            ClosePanel();
+        }
+        else
+        {
+            OpenPanel();
+        }
+    }
+    #endregion
 }

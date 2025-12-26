@@ -8,8 +8,18 @@ using UnityEngine;
 /// </summary>
 public class SoundManager : MonoBehaviour
 {
+    #region Singleton
     public static SoundManager Instance { get; private set; }
+    #endregion
 
+    #region Constants
+    private const float DEFAULT_BGM_VOLUME = 0.5f;
+    private const float DEFAULT_SFX_VOLUME = 0.7f;
+    private const string BGM_SOURCE_NAME = "BGM_Source";
+    private const string SFX_SOURCE_NAME = "SFX_Source";
+    #endregion
+
+    #region Serialized Fields
     [Header("Audio Sources")]
     [SerializeField] private AudioSource bgmSource;
     [SerializeField] private AudioSource sfxSource;
@@ -32,16 +42,26 @@ public class SoundManager : MonoBehaviour
     [Header("Volume Settings")]
     [SerializeField][Range(0f, 1f)] private float bgmVolume = 0.5f;
     [SerializeField][Range(0f, 1f)] private float sfxVolume = 0.7f;
+    #endregion
 
+    #region Unity Lifecycle
     void Awake()
     {
-        // 싱글톤 패턴
+        InitializeSingleton();
+        InitializeAudioSources();
+    }
+    #endregion
+
+    #region Initialization
+    /// <summary>
+    /// 싱글톤 초기화
+    /// </summary>
+    private void InitializeSingleton()
+    {
         if (Instance == null)
         {
             Instance = this;
             DontDestroyOnLoad(gameObject);
-
-            InitializeAudioSources();
         }
         else
         {
@@ -49,54 +69,110 @@ public class SoundManager : MonoBehaviour
         }
     }
 
-    void InitializeAudioSources()
+    /// <summary>
+    /// 오디오 소스 초기화
+    /// </summary>
+    private void InitializeAudioSources()
     {
-        // AudioSource가 없으면 자동 생성
-        if (bgmSource == null)
-        {
-            GameObject bgmObj = new GameObject("BGM_Source");
-            bgmObj.transform.SetParent(transform);
-            bgmSource = bgmObj.AddComponent<AudioSource>();
-            bgmSource.loop = true;
-            bgmSource.playOnAwake = false;
-        }
-
-        if (sfxSource == null)
-        {
-            GameObject sfxObj = new GameObject("SFX_Source");
-            sfxObj.transform.SetParent(transform);
-            sfxSource = sfxObj.AddComponent<AudioSource>();
-            sfxSource.loop = false;
-            sfxSource.playOnAwake = false;
-        }
-
-        // 볼륨 설정
-        bgmSource.volume = bgmVolume;
-        sfxSource.volume = sfxVolume;
+        CreateBGMSource();
+        CreateSFXSource();
+        SetInitialVolumes();
 
         Debug.Log("[SOUND MANAGER] Initialized");
     }
 
-    #region BGM Methods
+    /// <summary>
+    /// BGM 소스 생성
+    /// </summary>
+    private void CreateBGMSource()
+    {
+        if (bgmSource == null)
+        {
+            bgmSource = CreateAudioSource(BGM_SOURCE_NAME, true);
+        }
+    }
 
+    /// <summary>
+    /// SFX 소스 생성
+    /// </summary>
+    private void CreateSFXSource()
+    {
+        if (sfxSource == null)
+        {
+            sfxSource = CreateAudioSource(SFX_SOURCE_NAME, false);
+        }
+    }
+
+    /// <summary>
+    /// 오디오 소스 생성 헬퍼
+    /// </summary>
+    private AudioSource CreateAudioSource(string sourceName, bool loop)
+    {
+        GameObject sourceObj = new GameObject(sourceName);
+        sourceObj.transform.SetParent(transform);
+
+        AudioSource source = sourceObj.AddComponent<AudioSource>();
+        source.loop = loop;
+        source.playOnAwake = false;
+
+        return source;
+    }
+
+    /// <summary>
+    /// 초기 볼륨 설정
+    /// </summary>
+    private void SetInitialVolumes()
+    {
+        bgmSource.volume = bgmVolume;
+        sfxSource.volume = sfxVolume;
+    }
+    #endregion
+
+    #region BGM Methods
     /// <summary>
     /// BGM 재생
     /// </summary>
     public void PlayBGM(AudioClip clip, bool loop = true)
     {
-        if (clip == null || bgmSource == null) return;
-
-        // 같은 BGM이 이미 재생 중이면 무시
-        if (bgmSource.clip == clip && bgmSource.isPlaying)
+        if (!ValidateBGMClip(clip))
         {
             return;
         }
 
-        bgmSource.clip = clip;
-        bgmSource.loop = loop;
+        if (IsSameClipPlaying(clip))
+        {
+            return;
+        }
+
+        SetBGMClip(clip, loop);
         bgmSource.Play();
 
         Debug.Log($"[SOUND MANAGER] Playing BGM: {clip.name}");
+    }
+
+    /// <summary>
+    /// BGM 클립 유효성 검사
+    /// </summary>
+    private bool ValidateBGMClip(AudioClip clip)
+    {
+        return clip != null && bgmSource != null;
+    }
+
+    /// <summary>
+    /// 같은 클립이 재생 중인지 확인
+    /// </summary>
+    private bool IsSameClipPlaying(AudioClip clip)
+    {
+        return bgmSource.clip == clip && bgmSource.isPlaying;
+    }
+
+    /// <summary>
+    /// BGM 클립 설정
+    /// </summary>
+    private void SetBGMClip(AudioClip clip, bool loop)
+    {
+        bgmSource.clip = clip;
+        bgmSource.loop = loop;
     }
 
     /// <summary>
@@ -145,7 +221,10 @@ public class SoundManager : MonoBehaviour
         }
     }
 
-    System.Collections.IEnumerator FadeOutCoroutine(float duration)
+    /// <summary>
+    /// 페이드 아웃 코루틴
+    /// </summary>
+    private IEnumerator FadeOutCoroutine(float duration)
     {
         float startVolume = bgmSource.volume;
         float elapsed = 0f;
@@ -160,19 +239,37 @@ public class SoundManager : MonoBehaviour
         bgmSource.Stop();
         bgmSource.volume = startVolume;
     }
-
     #endregion
 
     #region SFX Methods
-
     /// <summary>
     /// 효과음 재생
     /// </summary>
     public void PlaySFX(AudioClip clip, float volumeScale = 1f)
     {
-        if (clip == null || sfxSource == null) return;
+        if (!ValidateSFXClip(clip))
+        {
+            return;
+        }
 
-        sfxSource.PlayOneShot(clip, volumeScale * sfxVolume);
+        float finalVolume = CalculateFinalSFXVolume(volumeScale);
+        sfxSource.PlayOneShot(clip, finalVolume);
+    }
+
+    /// <summary>
+    /// SFX 클립 유효성 검사
+    /// </summary>
+    private bool ValidateSFXClip(AudioClip clip)
+    {
+        return clip != null && sfxSource != null;
+    }
+
+    /// <summary>
+    /// 최종 SFX 볼륨 계산
+    /// </summary>
+    private float CalculateFinalSFXVolume(float volumeScale)
+    {
+        return volumeScale * sfxVolume;
     }
 
     /// <summary>
@@ -238,17 +335,16 @@ public class SoundManager : MonoBehaviour
     {
         PlaySFX(playerDeathSFX);
     }
-
     #endregion
 
     #region Volume Control
-
     /// <summary>
     /// BGM 볼륨 설정
     /// </summary>
     public void SetBGMVolume(float volume)
     {
         bgmVolume = Mathf.Clamp01(volume);
+
         if (bgmSource != null)
         {
             bgmSource.volume = bgmVolume;
@@ -261,11 +357,11 @@ public class SoundManager : MonoBehaviour
     public void SetSFXVolume(float volume)
     {
         sfxVolume = Mathf.Clamp01(volume);
+
         if (sfxSource != null)
         {
             sfxSource.volume = sfxVolume;
         }
     }
-
     #endregion
 }
