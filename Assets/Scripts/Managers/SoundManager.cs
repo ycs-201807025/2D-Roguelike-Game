@@ -239,6 +239,55 @@ public class SoundManager : MonoBehaviour
         bgmSource.Stop();
         bgmSource.volume = startVolume;
     }
+
+    /// <summary>
+    /// 던전 BGM으로 복귀 (보스 처치 후)
+    /// </summary>
+    public void ReturnToDungeonBGM()
+    {
+        PlayDungeonBGM();
+        Debug.Log("[SOUND MANAGER] Returned to Dungeon BGM");
+    }
+
+    /// <summary>
+    /// BGM 서서히 전환
+    /// </summary>
+    public void CrossfadeToDungeonBGM(float duration = 2f)
+    {
+        StartCoroutine(CrossfadeBGMCoroutine(dungeonBGM, duration));
+    }
+
+    /// <summary>
+    /// 크로스페이드 코루틴
+    /// </summary>
+    private IEnumerator CrossfadeBGMCoroutine(AudioClip newClip, float duration)
+    {
+        float startVolume = bgmSource.volume;
+
+        // 페이드 아웃
+        float elapsed = 0f;
+        while (elapsed < duration / 2f)
+        {
+            elapsed += Time.deltaTime;
+            bgmSource.volume = Mathf.Lerp(startVolume, 0f, elapsed / (duration / 2f));
+            yield return null;
+        }
+
+        // BGM 변경
+        bgmSource.clip = newClip;
+        bgmSource.Play();
+
+        // 페이드 인
+        elapsed = 0f;
+        while (elapsed < duration / 2f)
+        {
+            elapsed += Time.deltaTime;
+            bgmSource.volume = Mathf.Lerp(0f, startVolume, elapsed / (duration / 2f));
+            yield return null;
+        }
+
+        bgmSource.volume = startVolume;
+    }
     #endregion
 
     #region SFX Methods

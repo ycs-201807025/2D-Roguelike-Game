@@ -380,6 +380,11 @@ public class Boss : Enemy
     {
         Debug.Log($"[BOSS] {data.enemyName} defeated!");
 
+        
+
+        // ★★★ 보스 BGM 종료 및 던전 BGM 복귀 ★★★
+        ReturnToDungeonBGM();
+
         DropGold();
         DropRareWeapon();
 
@@ -543,6 +548,21 @@ public class Boss : Enemy
         CircleCollider2D col = dropObj.AddComponent<CircleCollider2D>();
         col.isTrigger = true;
         col.radius = 0.8f;
+    }
+
+    /// <summary>
+    /// 던전 BGM으로 복귀
+    /// </summary>
+    private void ReturnToDungeonBGM()
+    {
+        if (SoundManager.Instance != null)
+        {
+            // 부드러운 전환을 원하면:
+            SoundManager.Instance.CrossfadeToDungeonBGM(2f);
+
+            // 즉시 전환을 원하면:
+            // SoundManager.Instance.ReturnToDungeonBGM();
+        }
     }
     #endregion
 }
