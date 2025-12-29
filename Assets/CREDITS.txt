@@ -9,9 +9,9 @@
 
 # Sound Effects
 - Freesound.org
-  License: CC0 / CC BY 아직 다운x
+  License: CC0 / CC BY
 - Mixkit
-  Source: https://mixkit.co 아직 다운x
+  Source: https://mixkit.co 
   License: Mixkit License
 
 # Music
@@ -20,7 +20,7 @@
   Tracks used:
   * [트랙명]
   * [트랙명]
-  * [트랙명] 아직 다운x
+  * [트랙명] 
 
 # Tools
 - Unity Engine 2022.3.61f1

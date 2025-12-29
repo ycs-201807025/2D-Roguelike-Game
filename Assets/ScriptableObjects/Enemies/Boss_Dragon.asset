@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Boss_Dragon
   m_EditorClassIdentifier: 
   enemyName: "\uB4DC\uB798\uACE4"
-  sprite: {fileID: 0}
+  sprite: {fileID: 21300000, guid: 64018b0ae6fe4344b90ffe3dae2d1bda, type: 3}
   maxHealth: 300
   damage: 15
   moveSpeed: 2

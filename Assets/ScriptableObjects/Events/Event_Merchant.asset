@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Event_Merchant
   m_EditorClassIdentifier: 
   eventTitle: "\uB5A0\uB3CC\uC774 \uC0C1\uC778"
-  eventDescription: "\uC218\uC0C1\uD55C \uC0C1\uC778\uC774 \uB2F9\uC2E0\uC744 \uBD80\uB985\uB2C8\uB2E4.\\n'\uD2B9\uBCC4\uD55C
+  eventDescription: "\uC218\uC0C1\uD55C \uC0C1\uC778\uC774 \uB2F9\uC2E0\uC744 \uBD80\uB985\uB2C8\uB2E4.\n\uD2B9\uBCC4\uD55C
     \uBB3C\uAC74\uC774 \uC788\uB294\uB370... \uAD00\uC2EC \uC788\uC18C?"
   options:
   - optionText: "\uBB34\uAE30 \uAD6C\uB9E4 (80 \uACE8\uB4DC)"
