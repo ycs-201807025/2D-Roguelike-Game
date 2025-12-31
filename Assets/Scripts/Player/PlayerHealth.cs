@@ -293,6 +293,7 @@ public class PlayerHealth : MonoBehaviour
         Debug.Log("[PLAYER HEALTH] Player died!");
 
         PlayDeathSound();
+        StopBGM();
         AwardSouls();
     }
     /// <summary>
@@ -305,7 +306,17 @@ public class PlayerHealth : MonoBehaviour
             SoundManager.Instance.PlayPlayerDeathSFX();
         }
     }
-
+    /// <summary>
+    /// BGM 정지 
+    /// </summary>
+    private void StopBGM()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopBGM();
+            Debug.Log("[PLAYER HEALTH] Stopped BGM on death");
+        }
+    }
     /// <summary>
     /// 영혼 보상
     /// </summary>

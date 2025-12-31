@@ -95,6 +95,7 @@ public class GameOverManager : MonoBehaviour
 
         ActivateGameOverPanel();
         PauseGame();
+        StopAllBGM();
     }
 
     /// <summary>
@@ -115,6 +116,17 @@ public class GameOverManager : MonoBehaviour
     {
         Time.timeScale = PAUSED_TIME_SCALE;
     }
+    /// <summary>
+    /// 모든 BGM 정지 
+    /// </summary>
+    private void StopAllBGM()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopBGM();
+            Debug.Log("[GAME OVER] Stopped all BGM");
+        }
+    }
     #endregion
 
     #region Button Handlers
@@ -123,6 +135,7 @@ public class GameOverManager : MonoBehaviour
     /// </summary>
     private void OnRestart()
     {
+        PlayButtonSound();
         ResumeGame();
         LoadGameplayScene();
     }
@@ -132,10 +145,21 @@ public class GameOverManager : MonoBehaviour
     /// </summary>
     private void OnMainMenu()
     {
+        PlayButtonSound();
         ResumeGame();
+        StopAllBGM();
         LoadMainMenuScene();
     }
-
+    /// <summary>
+    /// 버튼 클릭 사운드 재생 
+    /// </summary>
+    private void PlayButtonSound()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.PlayButtonClickSFX();
+        }
+    }
     /// <summary>
     /// 게임 재개
     /// </summary>
@@ -168,6 +192,8 @@ public class GameOverManager : MonoBehaviour
     private void Cleanup()
     {
         UnsubscribeFromPlayerEvents();
+
+        EnsureTimeScaleRestored();
     }
 
     /// <summary>
@@ -178,6 +204,18 @@ public class GameOverManager : MonoBehaviour
         if (PlayerStats.Instance != null)
         {
             PlayerStats.Instance.OnPlayerDied -= ShowGameOver;
+        }
+    }
+
+    /// <summary>
+    /// timeScale 복원 보장 
+    /// </summary>
+    private void EnsureTimeScaleRestored()
+    {
+        if (Time.timeScale != NORMAL_TIME_SCALE)
+        {
+            Time.timeScale = NORMAL_TIME_SCALE;
+            Debug.Log("[GAME OVER] Ensured Time.timeScale is restored on cleanup");
         }
     }
     #endregion

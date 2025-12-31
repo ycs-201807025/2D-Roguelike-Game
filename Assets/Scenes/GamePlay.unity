@@ -7574,6 +7574,9 @@ MonoBehaviour:
   doorOpenSFX: {fileID: 8300000, guid: 39df2b555049dad4fb9f281e679b16f5, type: 3}
   enemyDeathSFX: {fileID: 8300000, guid: 93a17b44e7f1fef4990125c68da55a1b, type: 3}
   playerDeathSFX: {fileID: 8300000, guid: 74aa319c3f22c974f9d89034b7563563, type: 3}
+  startButtonSFX: {fileID: 8300000, guid: 0b43e001c8858dd4e91527cee477d03b, type: 3}
+  upgradeButtonSFX: {fileID: 8300000, guid: 9b0978fd80ecc564abdd7a1c259db273, type: 3}
+  quitButtonSFX: {fileID: 8300000, guid: c7bca37af200ac546b3e94c24118ccc6, type: 3}
   bgmVolume: 0.5
   sfxVolume: 0.7
 --- !u!4 &1227178426

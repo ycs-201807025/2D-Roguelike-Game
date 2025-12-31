@@ -11,6 +11,7 @@ public class MainMenuManager : MonoBehaviour
 {
     #region Constants
     private const float QUIT_SOUND_DELAY = 0.5f; // 종료 전 대기 시간 (0.5초)
+    private const float NORMAL_TIME_SCALE = 1f;
     #endregion
 
     #region Serialized Fields
@@ -28,6 +29,11 @@ public class MainMenuManager : MonoBehaviour
     #endregion
 
     #region Unity Lifecycle
+    void Awake()
+    {
+        //제일 먼저 timeScale 복원 
+        EnsureTimeScaleRestored();
+    }
     void Start()
     {
         // 버튼 이벤트 연결
@@ -35,6 +41,8 @@ public class MainMenuManager : MonoBehaviour
 
         // 강화 패널 비활성화
         HideUpgradePanel();
+
+        StopAllBGM();
 
         // BGM 재생
         PlayMainMenuBGM();
@@ -48,6 +56,17 @@ public class MainMenuManager : MonoBehaviour
     #endregion
 
     #region Initialization
+    /// <summary>
+    /// timeScale 복원 보장
+    /// </summary>
+    private void EnsureTimeScaleRestored()
+    {
+        if (Time.timeScale != NORMAL_TIME_SCALE)
+        {
+            Time.timeScale = NORMAL_TIME_SCALE;
+            Debug.Log("[MENU] Time.timeScale was not 1, restored to normal");
+        }
+    }
     /// <summary>
     /// 버튼 초기화
     /// </summary>
@@ -77,6 +96,17 @@ public class MainMenuManager : MonoBehaviour
         if (upgradePanel != null)
         {
             upgradePanel.SetActive(false);
+        }
+    }
+    /// <summary>
+    /// 모든 BGM 정지
+    /// </summary>
+    private void StopAllBGM()
+    {
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopBGM();
+            Debug.Log("[MENU] Stopped all previous BGM");
         }
     }
     /// <summary>
@@ -124,6 +154,7 @@ public class MainMenuManager : MonoBehaviour
         StartCoroutine(QuitGameCoroutine());
     }
     #endregion
+
     #region Sound Methods
     /// <summary>
     /// 게임 시작 버튼 사운드

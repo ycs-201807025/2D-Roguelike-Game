@@ -2720,15 +2720,15 @@ MonoBehaviour:
   sfxSource: {fileID: 0}
   mainMenuBGM: {fileID: 0}
   dungeonBGM: {fileID: 0}
-  bossBGM: {fileID: 0}
-  attackSFX: {fileID: 0}
-  hitSFX: {fileID: 0}
-  dashSFX: {fileID: 0}
-  itemPickupSFX: {fileID: 0}
-  buttonClickSFX: {fileID: 0}
-  doorOpenSFX: {fileID: 0}
-  enemyDeathSFX: {fileID: 0}
-  playerDeathSFX: {fileID: 0}
+  bossBGM: {fileID: 8300000, guid: 16d6f49a8dc551947b5781af4b7de882, type: 3}
+  attackSFX: {fileID: 8300000, guid: 75516ffccaff08a43a86fe81e382a58e, type: 3}
+  hitSFX: {fileID: 8300000, guid: a23e2e70c898bce4e93074498ceaa2db, type: 3}
+  dashSFX: {fileID: 8300000, guid: e38229322629dba4c8f8f07ac259ff1d, type: 3}
+  itemPickupSFX: {fileID: 8300000, guid: 316ac834e8e528e488350f68a177d075, type: 3}
+  buttonClickSFX: {fileID: 8300000, guid: 47ee37a1f33881345b5020873c4ea38a, type: 3}
+  doorOpenSFX: {fileID: 8300000, guid: 39df2b555049dad4fb9f281e679b16f5, type: 3}
+  enemyDeathSFX: {fileID: 8300000, guid: 93a17b44e7f1fef4990125c68da55a1b, type: 3}
+  playerDeathSFX: {fileID: 8300000, guid: 74aa319c3f22c974f9d89034b7563563, type: 3}
   startButtonSFX: {fileID: 8300000, guid: 0b43e001c8858dd4e91527cee477d03b, type: 3}
   upgradeButtonSFX: {fileID: 8300000, guid: 9b0978fd80ecc564abdd7a1c259db273, type: 3}
   quitButtonSFX: {fileID: 8300000, guid: c7bca37af200ac546b3e94c24118ccc6, type: 3}
