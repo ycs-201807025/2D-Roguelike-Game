@@ -2663,6 +2663,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1945268804}
   - component: {fileID: 1945268805}
+  - component: {fileID: 1945268806}
   m_Layer: 0
   m_Name: MainMenuManager
   m_TagString: Untagged
@@ -2702,6 +2703,37 @@ MonoBehaviour:
   quitButton: {fileID: 1065878674}
   upgradePanel: {fileID: 2081947157}
   upgradeManager: {fileID: 2081947161}
+  quitSoundDelay: 1
+--- !u!114 &1945268806
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1945268803}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c682c0a449dcbe74c8c7fb194cda65f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bgmSource: {fileID: 0}
+  sfxSource: {fileID: 0}
+  mainMenuBGM: {fileID: 0}
+  dungeonBGM: {fileID: 0}
+  bossBGM: {fileID: 0}
+  attackSFX: {fileID: 0}
+  hitSFX: {fileID: 0}
+  dashSFX: {fileID: 0}
+  itemPickupSFX: {fileID: 0}
+  buttonClickSFX: {fileID: 0}
+  doorOpenSFX: {fileID: 0}
+  enemyDeathSFX: {fileID: 0}
+  playerDeathSFX: {fileID: 0}
+  startButtonSFX: {fileID: 8300000, guid: 0b43e001c8858dd4e91527cee477d03b, type: 3}
+  upgradeButtonSFX: {fileID: 8300000, guid: 9b0978fd80ecc564abdd7a1c259db273, type: 3}
+  quitButtonSFX: {fileID: 8300000, guid: c7bca37af200ac546b3e94c24118ccc6, type: 3}
+  bgmVolume: 0.5
+  sfxVolume: 0.7
 --- !u!1 &2081947157
 GameObject:
   m_ObjectHideFlags: 0

@@ -39,6 +39,11 @@ public class SoundManager : MonoBehaviour
     [SerializeField] private AudioClip enemyDeathSFX;
     [SerializeField] private AudioClip playerDeathSFX;
 
+    [Header("UI Button Sounds")] 
+    [SerializeField] private AudioClip startButtonSFX;      // 게임 시작 버튼
+    [SerializeField] private AudioClip upgradeButtonSFX;    // 영구 강화 버튼
+    [SerializeField] private AudioClip quitButtonSFX;       // 게임 종료 버튼
+
     [Header("Volume Settings")]
     [SerializeField][Range(0f, 1f)] private float bgmVolume = 0.5f;
     [SerializeField][Range(0f, 1f)] private float sfxVolume = 0.7f;
@@ -360,7 +365,32 @@ public class SoundManager : MonoBehaviour
     {
         PlaySFX(buttonClickSFX, 0.5f);
     }
+    /// <summary>
+    /// 게임 시작 버튼 소리
+    /// </summary>
+    public void PlayStartButtonSFX()
+    {
+        PlaySFX(startButtonSFX, 0.6f);
+        Debug.Log("[SOUND MANAGER] Playing Start Button SFX");
+    }
 
+    /// <summary>
+    /// 영구 강화 버튼 소리
+    /// </summary>
+    public void PlayUpgradeButtonSFX()
+    {
+        PlaySFX(upgradeButtonSFX, 0.5f);
+        Debug.Log("[SOUND MANAGER] Playing Upgrade Button SFX");
+    }
+
+    /// <summary>
+    /// 게임 종료 버튼 소리
+    /// </summary>
+    public void PlayQuitButtonSFX()
+    {
+        PlaySFX(quitButtonSFX, 0.5f);
+        Debug.Log("[SOUND MANAGER] Playing Quit Button SFX");
+    }
     /// <summary>
     /// 문 열리는 소리
     /// </summary>
