@@ -49,6 +49,14 @@ public class MainMenuManager : MonoBehaviour
 
         Debug.Log("[MENU] Main Menu Initialized");
     }
+    void Update()
+    {
+        // F2 키로 timeScale 확인
+        if (Input.GetKeyDown(KeyCode.F2))
+        {
+            Debug.Log($"[DEBUG] Current Time.timeScale: {Time.timeScale}");
+        }
+    }
     void OnDestroy()
     {
         CleanupButtons();

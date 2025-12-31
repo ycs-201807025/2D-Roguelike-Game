@@ -42,6 +42,14 @@ public class UpgradeManager : MonoBehaviour
     {
         HandleToggleInput();
     }
+    void OnDestroy()
+    {
+        EnsureTimeScaleRestored();
+    }
+    void OnDisable()
+    {
+        EnsureTimeScaleRestored();
+    }
     #endregion
 
     #region Initialization
@@ -397,6 +405,17 @@ public class UpgradeManager : MonoBehaviour
     private void ResumeGame()
     {
         Time.timeScale = NORMAL_TIME_SCALE;
+    }
+    /// <summary>
+    /// timeScale이 정상으로 복원되었는지 확인
+    /// </summary>
+    private void EnsureTimeScaleRestored()
+    {
+        if (Time.timeScale != NORMAL_TIME_SCALE)
+        {
+            Time.timeScale = NORMAL_TIME_SCALE;
+            Debug.Log("[UPGRADE MANAGER] Restored Time.timeScale to 1 on cleanup");
+        }
     }
     #endregion
 
