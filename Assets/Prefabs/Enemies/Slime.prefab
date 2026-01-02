@@ -110,10 +110,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   data: {fileID: 11400000, guid: 8f4d4b67e44735d49938ffe38b9f7c13, type: 2}
+  hitEffectPrefab: {fileID: 3678198593554658784, guid: 125185e364561b248b582742e2228016, type: 3}
   rb: {fileID: 0}
   player: {fileID: 0}
   spriteRenderer: {fileID: 0}
-  hitEffectPrefab: {fileID: 3678198593554658784, guid: 125185e364561b248b582742e2228016, type: 3}
 --- !u!1 &3120294731078399184
 GameObject:
   m_ObjectHideFlags: 0
@@ -141,7 +141,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0.0048, y: 0, z: 0.0036}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 3, y: 3, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 5918702779113397621}
