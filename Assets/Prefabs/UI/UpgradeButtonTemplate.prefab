@@ -67,8 +67,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "50 \uC601\uD63C\n"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3ad7802922e698e4bb54f4d512598c1c, type: 2}
+  m_sharedMaterial: {fileID: -409365123902626028, guid: 3ad7802922e698e4bb54f4d512598c1c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -201,8 +201,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uCD5C\uB300 \uCCB4\uB825 \uC99D\uAC00"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3ad7802922e698e4bb54f4d512598c1c, type: 2}
+  m_sharedMaterial: {fileID: -409365123902626028, guid: 3ad7802922e698e4bb54f4d512598c1c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -335,8 +335,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Lv. 0 / 5
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3ad7802922e698e4bb54f4d512598c1c, type: 2}
+  m_sharedMaterial: {fileID: -409365123902626028, guid: 3ad7802922e698e4bb54f4d512598c1c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -469,8 +469,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\uCD5C\uB300 \uCCB4\uB825\uC744 \uC601\uAD6C\uC801\uC73C\uB85C \uC99D\uAC00\uC2DC\uD0B5\uB2C8\uB2E4"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 3ad7802922e698e4bb54f4d512598c1c, type: 2}
+  m_sharedMaterial: {fileID: -409365123902626028, guid: 3ad7802922e698e4bb54f4d512598c1c, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -673,9 +673,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f30359042b7c3cf439c2c525ef7c4e0f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  upgradeData: {fileID: 0}
   nameText: {fileID: 3039806945967624335}
+  descriptionText: {fileID: 0}
   levelText: {fileID: 2978071638259712165}
   costText: {fileID: 7865032316079015339}
-  effectText: {fileID: 3129068962107088453}
   button: {fileID: 0}
+  affordableColor: {r: 0.4, g: 0.8, b: 0.4, a: 1}
+  notAffordableColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
+  maxLevelColor: {r: 1, g: 0.84, b: 0, a: 1}
