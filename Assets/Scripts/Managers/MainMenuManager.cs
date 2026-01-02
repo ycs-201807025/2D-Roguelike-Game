@@ -26,6 +26,9 @@ public class MainMenuManager : MonoBehaviour
 
     [Header("Quit Settings")]
     [SerializeField] private float quitSoundDelay = 0.5f; // Inspector에서 조절 가능
+
+    [Header("Auto Find Buttons")] 
+    [SerializeField] private bool autoFindButtons = true;
     #endregion
 
     #region Unity Lifecycle
@@ -33,6 +36,11 @@ public class MainMenuManager : MonoBehaviour
     {
         //제일 먼저 timeScale 복원 
         EnsureTimeScaleRestored();
+
+        if (autoFindButtons)
+        {
+            FindButtonsIfMissing();
+        }
     }
     void Start()
     {
@@ -48,6 +56,8 @@ public class MainMenuManager : MonoBehaviour
         PlayMainMenuBGM();
 
         Debug.Log("[MENU] Main Menu Initialized");
+
+        ValidateButtonReferences();
     }
     void Update()
     {
@@ -73,6 +83,116 @@ public class MainMenuManager : MonoBehaviour
         {
             Time.timeScale = NORMAL_TIME_SCALE;
             Debug.Log("[MENU] Time.timeScale was not 1, restored to normal");
+        }
+    }
+    /// <summary>
+    /// 버튼이 없으면 자동으로 찾기
+    /// </summary>
+    private void FindButtonsIfMissing()
+    {
+        // Canvas 찾기
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogError("[MENU] Canvas not found!");
+            return;
+        }
+
+        // 버튼들을 이름으로 찾기
+        if (startButton == null)
+        {
+            startButton = FindButtonByName(canvas.transform, "게임 시작");
+            if (startButton != null)
+            {
+                Debug.Log("[MENU] Found Start Button");
+            }
+        }
+
+        if (upgradeButton == null)
+        {
+            upgradeButton = FindButtonByName(canvas.transform, "영구 강화");
+            if (upgradeButton != null)
+            {
+                Debug.Log("[MENU] Found Upgrade Button");
+            }
+        }
+
+        if (quitButton == null)
+        {
+            quitButton = FindButtonByName(canvas.transform, "게임 종료");
+            if (quitButton != null)
+            {
+                Debug.Log("[MENU] Found Quit Button");
+            }
+        }
+
+        // UpgradePanel 찾기
+        if (upgradePanel == null)
+        {
+            GameObject panel = GameObject.Find("UpgradePanel");
+            if (panel != null)
+            {
+                upgradePanel = panel;
+                Debug.Log("[MENU] Found Upgrade Panel");
+            }
+        }
+
+        // UpgradeManager 찾기
+        if (upgradeManager == null)
+        {
+            upgradeManager = FindObjectOfType<UpgradeManager>();
+            if (upgradeManager != null)
+            {
+                Debug.Log("[MENU] Found Upgrade Manager");
+            }
+        }
+    }
+
+    /// <summary>
+    /// 이름으로 버튼 찾기
+    /// </summary>
+    private Button FindButtonByName(Transform parent, string buttonName)
+    {
+        // 모든 자식 중에서 이름이 일치하는 버튼 찾기
+        Button[] buttons = parent.GetComponentsInChildren<Button>(true);
+        foreach (Button btn in buttons)
+        {
+            if (btn.gameObject.name.Contains(buttonName))
+            {
+                return btn;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// 버튼 참조 유효성 검사
+    /// </summary>
+    private void ValidateButtonReferences()
+    {
+        if (startButton == null)
+        {
+            Debug.LogError("[MENU] Start Button is NULL!");
+        }
+
+        if (upgradeButton == null)
+        {
+            Debug.LogError("[MENU] Upgrade Button is NULL!");
+        }
+
+        if (quitButton == null)
+        {
+            Debug.LogError("[MENU] Quit Button is NULL!");
+        }
+
+        if (upgradePanel == null)
+        {
+            Debug.LogWarning("[MENU] Upgrade Panel is NULL!");
+        }
+
+        if (upgradeManager == null)
+        {
+            Debug.LogWarning("[MENU] Upgrade Manager is NULL!");
         }
     }
     /// <summary>

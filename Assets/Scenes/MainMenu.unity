@@ -377,6 +377,68 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 128838664}
   m_CullTransparentMesh: 1
+--- !u!1 &165124527
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 165124529}
+  - component: {fileID: 165124528}
+  m_Layer: 0
+  m_Name: SoundManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &165124528
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 165124527}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c682c0a449dcbe74c8c7fb194cda65f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bgmSource: {fileID: 0}
+  sfxSource: {fileID: 0}
+  mainMenuBGM: {fileID: 0}
+  dungeonBGM: {fileID: 0}
+  bossBGM: {fileID: 8300000, guid: 16d6f49a8dc551947b5781af4b7de882, type: 3}
+  attackSFX: {fileID: 8300000, guid: 75516ffccaff08a43a86fe81e382a58e, type: 3}
+  hitSFX: {fileID: 8300000, guid: a23e2e70c898bce4e93074498ceaa2db, type: 3}
+  dashSFX: {fileID: 8300000, guid: e38229322629dba4c8f8f07ac259ff1d, type: 3}
+  itemPickupSFX: {fileID: 8300000, guid: 316ac834e8e528e488350f68a177d075, type: 3}
+  buttonClickSFX: {fileID: 8300000, guid: 47ee37a1f33881345b5020873c4ea38a, type: 3}
+  doorOpenSFX: {fileID: 8300000, guid: 39df2b555049dad4fb9f281e679b16f5, type: 3}
+  enemyDeathSFX: {fileID: 8300000, guid: 93a17b44e7f1fef4990125c68da55a1b, type: 3}
+  playerDeathSFX: {fileID: 8300000, guid: 74aa319c3f22c974f9d89034b7563563, type: 3}
+  startButtonSFX: {fileID: 8300000, guid: 0b43e001c8858dd4e91527cee477d03b, type: 3}
+  upgradeButtonSFX: {fileID: 8300000, guid: 9b0978fd80ecc564abdd7a1c259db273, type: 3}
+  quitButtonSFX: {fileID: 8300000, guid: c7bca37af200ac546b3e94c24118ccc6, type: 3}
+  bgmVolume: 0.5
+  sfxVolume: 0.7
+--- !u!4 &165124529
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 165124527}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -1.6084394, y: 0.5728109, z: -0.08677451}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &245916645
 GameObject:
   m_ObjectHideFlags: 0
@@ -2663,7 +2725,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1945268804}
   - component: {fileID: 1945268805}
-  - component: {fileID: 1945268806}
   m_Layer: 0
   m_Name: MainMenuManager
   m_TagString: Untagged
@@ -2704,36 +2765,7 @@ MonoBehaviour:
   upgradePanel: {fileID: 2081947157}
   upgradeManager: {fileID: 2081947161}
   quitSoundDelay: 1
---- !u!114 &1945268806
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1945268803}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c682c0a449dcbe74c8c7fb194cda65f2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  bgmSource: {fileID: 0}
-  sfxSource: {fileID: 0}
-  mainMenuBGM: {fileID: 0}
-  dungeonBGM: {fileID: 0}
-  bossBGM: {fileID: 8300000, guid: 16d6f49a8dc551947b5781af4b7de882, type: 3}
-  attackSFX: {fileID: 8300000, guid: 75516ffccaff08a43a86fe81e382a58e, type: 3}
-  hitSFX: {fileID: 8300000, guid: a23e2e70c898bce4e93074498ceaa2db, type: 3}
-  dashSFX: {fileID: 8300000, guid: e38229322629dba4c8f8f07ac259ff1d, type: 3}
-  itemPickupSFX: {fileID: 8300000, guid: 316ac834e8e528e488350f68a177d075, type: 3}
-  buttonClickSFX: {fileID: 8300000, guid: 47ee37a1f33881345b5020873c4ea38a, type: 3}
-  doorOpenSFX: {fileID: 8300000, guid: 39df2b555049dad4fb9f281e679b16f5, type: 3}
-  enemyDeathSFX: {fileID: 8300000, guid: 93a17b44e7f1fef4990125c68da55a1b, type: 3}
-  playerDeathSFX: {fileID: 8300000, guid: 74aa319c3f22c974f9d89034b7563563, type: 3}
-  startButtonSFX: {fileID: 8300000, guid: 0b43e001c8858dd4e91527cee477d03b, type: 3}
-  upgradeButtonSFX: {fileID: 8300000, guid: 9b0978fd80ecc564abdd7a1c259db273, type: 3}
-  quitButtonSFX: {fileID: 8300000, guid: c7bca37af200ac546b3e94c24118ccc6, type: 3}
-  bgmVolume: 0.5
-  sfxVolume: 0.7
+  autoFindButtons: 1
 --- !u!1 &2081947157
 GameObject:
   m_ObjectHideFlags: 0
@@ -2883,3 +2915,4 @@ SceneRoots:
   - {fileID: 673730164}
   - {fileID: 1894725784}
   - {fileID: 1945268804}
+  - {fileID: 165124529}
